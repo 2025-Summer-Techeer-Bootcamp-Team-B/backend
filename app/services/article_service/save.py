@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.news_article import NewsArticle
 from app.models.press import Press
+from app.models.category import Category
 from typing import Dict, List, Optional
 import datetime
 import uuid
@@ -76,6 +77,19 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         db.refresh(press)
         logger.info(f"새 언론사 생성: {press.press_name}")
 
+        # 카테고리 ID 찾기 (category를 article_data에서 가져옴, 없으면 'general')
+        category_name = article_data.get('category', 'general')
+        category = db.query(Category).filter(
+            Category.category_name == category_name,
+            Category.is_deleted == False
+        ).first()
+
+        if not category:
+            category = Category(category_name=category_name)
+            db.add(category)
+            db.commit()
+            db.refresh(category)
+            logger.info(f"새 카테고리 생성: {category.category_name}")
 
     
         # 발행 시간 파싱
@@ -89,16 +103,6 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         # 오디오 URL 생성
         male_audio_url, female_audio_url = generate_audio_urls(article_data['title'], article_id)
         
-        # # NewsArticle 생성 전 필드 값 로그
-        # logger.info(f"title: {article_data.get('title')}")
-        # logger.info(f"url: {article_data.get('url')}")
-        # logger.info(f"content: {article_data.get('content')}")
-        # logger.info(f"category: {article_data.get('category')}")
-        # logger.info(f"image_url: {article_data.get('image_url')}")
-        # logger.info(f"reporter_name: {article_data.get('reporter_name')}")
-        # logger.info(f"published_time: {article_data.get('published_time')}")
-        # logger.info(f"press_name: {article_data.get('press_name')}")
-        # NewsArticle 객체 생성
         news_article = NewsArticle(
             id=uuid.UUID(article_id),
             title=(article_data.get('title') or '')[:255],  # 길이 제한
@@ -107,11 +111,12 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
             summary_text=(article_data.get('content') or '')[:10000],  # 텍스트 길이 제한
             male_audio_url=male_audio_url,
             female_audio_url=female_audio_url,
-            categories=(article_data.get('category') or '')[:20],  # 길이 제한
-            image_url=(article_data.get('image_url') or '')[:200], # 길이 제한
+            category_name=(article_data.get('category') or '')[:30],  # 길이 제한
+            original_image_url=(article_data.get('image_url') or '')[:200], # 길이 제한
             author=(article_data.get('reporter_name') or '')[:20], # 길이 제한
             is_deleted=False,
-            press_id=press.id
+            press_id=press.id,
+            category_id=category.id
         )
         
         # 데이터베이스에 저장
