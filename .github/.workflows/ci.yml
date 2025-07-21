@@ -1,60 +1,50 @@
-name: CI
+name: CI for FastAPI + Docker
 
 on:
   push:
     branches:
-      - main # 메인 브렌치에 브랜치 머지 시 자동으로 실행
+      - main
   pull_request:
     branches:
-      - '**' # 모든 브랜치에 PR 올릴 때 실행
-  
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4 # 레포 클론
+      - main
 
-    - name: Set up Go 1.23
-      uses: actions/setup-go@v5 # 저는 고 언어 빌드를 했습니다. 다른 언어는 marketplace에 찾으시면 됩니다
-      with:
-        go-version: '1.23'
-    - run: go version
-    - name: Show build number # 도커 허브에 올릴 빌드 넘버 만들기
-      run: |
-        echo "Build Number: ${{ github.run_number }}" # 빌드 넘버는 런 넘버 입니다
-    - name: Show pull request number # 여기는 pr 인지 확인 해주고 빌드 해줍니다.
-      if: ${{ github.event_name == 'pull_request' }}
-      run: |
-        echo "PR Number: ${{ github.event.pull_request.number }}"
-    - name: Get PR Number for Main Branch Merge # pr number 추출
-      id: get_pr_number
-      if: github.ref == 'refs/heads/main'
-      run: |
-        PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --state closed --json number,mergeCommit --jq ".[] | select(.mergeCommit.oid == \"${{ github.sha }}\") | .number")
-        echo "PR_NUMBER=${PR_NUMBER}"
-        echo "PR_NUMBER"="${PR_NUMBER}" >> $GITHUB_OUTPUT
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Set Docker Image Tag # pr넘버와 run number기반 도커 이미지 태그 만들기
-      id: set_docker_image_tag
-      env:
-        PR_NUMBER: ${{ steps.get_pr_number.outputs.PR_NUMBER }}
-      run: |
-        if [ "${{ github.ref_name }}" == "main" ]; then # 메인 브렌치로 머지하는 경우
-          DOCKER_IMAGE_TAG="1.1.$PR_NUMBER"
-        else # 그냥 풀 리퀘 요청인 경우
-          DOCKER_IMAGE_TAG="0.${{ github.event.pull_request.number }}.${{ github.run_number }}"
-        fi
-        echo "Docker Image Tag: $DOCKER_IMAGE_TAG"
-        echo "DOCKER_IMAGE_TAG"="${DOCKER_IMAGE_TAG}" >> $GITHUB_OUTPUT
-    - name: Log in to Docker Hub # 도커 허브 로그인
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    - name: Build and push Docker image # 도커 이미지 빌드 이후 허브로 업로드
-      env:
-        DOCKER_IMAGE_TAG: ${{ steps.set_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
-      run: |
-        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/도커-허브-레포-이름:$DOCKER_IMAGE_TAG .
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/도커-허브-레포-이름:$DOCKER_IMAGE_TAG
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: testing_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432; do sleep 1; done
+
+      - name: Run tests
+        run: |
+          pytest
