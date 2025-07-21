@@ -10,41 +10,38 @@ from app.services.crawling_service.article_processor import process_article_with
 
 RSS_FEEDS = {
     "한국경제": {
-    #     # "전체뉴스": "https://www.hankyung.com/feed/all-news",
-        # "증권": "https://www.hankyung.com/feed/finance",
-    #     # "경제": "https://www.hankyung.com/feed/economy",
-    #     # "부동산": "https://www.hankyung.com/feed/realestate",
-         "IT": "https://www.hankyung.com/feed/it",
-    #     # "정치": "https://www.hankyung.com/feed/politics",
-         "국제": "https://www.hankyung.com/feed/international",
-        #  "사회": "https://www.hankyung.com/feed/society",
-        #   "문화": "https://www.hankyung.com/feed/life",
-        #  "스포츠": "https://www.hankyung.com/feed/sports",
-    #     # "연예": "https://www.hankyung.com/feed/entertainment"
+        "전체뉴스": "https://www.hankyung.com/feed/all-news",
+        "증권": "https://www.hankyung.com/feed/finance",
+        "경제": "https://www.hankyung.com/feed/economy",
+        "부동산": "https://www.hankyung.com/feed/realestate",
+        "IT": "https://www.hankyung.com/feed/it",
+        "정치": "https://www.hankyung.com/feed/politics",
+        "국제": "https://www.hankyung.com/feed/international",
+        "사회": "https://www.hankyung.com/feed/society",
+        "문화": "https://www.hankyung.com/feed/life",
+        "스포츠": "https://www.hankyung.com/feed/sports",
+        "연예": "https://www.hankyung.com/feed/entertainment"
     },
-    # "SBS뉴스": {
-        # "이시각 이슈": "https://news.sbs.co.kr/news/headlineRssFeed.do?plink=RSSREADER",
-        # "최신": "https://news.sbs.co.kr/news/newsflashRssFeed.do?plink=RSSREADER",
-        # "정치": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER",
-        # "경제": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=02&plink=RSSREADER",
-        # "사회": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=03&plink=RSSREADER",
-        # "국제": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=07&plink=RSSREADER",
-        # "문화": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08&plink=RSSREADER",
-        # "연예": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=14&plink=RSSREADER",
-        # "스포츠": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=09&plink=RSSREADER"
-    # },
-    # "매일경제":{
-    # # #     # "전체뉴스":"https://www.mk.co.kr/rss/40300001",
-    # # #     "경제":"https://www.mk.co.kr/rss/30100041",
-    #     #  "정치":"https://www.mk.co.kr/rss/30200030",
-    # #     # "사회":"https://www.mk.co.kr/rss/50400012",
-    # #     "국제":"https://www.mk.co.kr/rss/30300018",
-    # # #     "증권":"https://www.mk.co.kr/rss/50200011",
-    #      "부동산":"https://www.mk.co.kr/rss/50300009",
-    # # #     "문화":"https://www.mk.co.kr/rss/30000023",
-    # # #     "스포츠":"https://www.mk.co.kr/rss/71000001",
-    # #     "IT":"https://www.mk.co.kr/rssㄴ/50700001"
-    # },
+    "SBS뉴스": {
+        "정치": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER",
+        "경제": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=02&plink=RSSREADER",
+        "사회": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=03&plink=RSSREADER",
+        "국제": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=07&plink=RSSREADER",
+        "문화": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08&plink=RSSREADER",
+        "연예": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=14&plink=RSSREADER",
+        "스포츠": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=09&plink=RSSREADER"
+    },
+    "매일경제":{
+        "경제":"https://www.mk.co.kr/rss/30100041",
+        "정치":"https://www.mk.co.kr/rss/30200030",
+        "사회":"https://www.mk.co.kr/rss/50400012",
+        "국제":"https://www.mk.co.kr/rss/30300018",
+        "증권":"https://www.mk.co.kr/rss/50200011",
+        "부동산":"https://www.mk.co.kr/rss/50300009",
+        "문화":"https://www.mk.co.kr/rss/30000023",
+        "스포츠":"https://www.mk.co.kr/rss/71000001",
+        "IT":"https://www.mk.co.kr/rss/50700001"
+    },
 }
 
 """카테고리별 비동기 크롤링"""

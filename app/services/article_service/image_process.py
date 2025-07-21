@@ -5,17 +5,12 @@ import boto3
 from botocore.exceptions import ClientError
 import uuid
 from typing import Tuple, Optional, Dict
-from app.core.database import get_db
-from sqlalchemy.orm import Session
-from app.models.news_article import NewsArticle
-from app.services.article_service.query import get_article_by_id
-from fastapi import HTTPException, Depends
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-S3_BUCKET = os.getenv('S3_BUCKET', 'your-bucket-name')
+S3_BUCKET = os.getenv('S3_BUCKET', 'newsbriefing-bucket')
 S3_REGION = os.getenv('S3_REGION', 'ap-northeast-2')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
@@ -27,6 +22,7 @@ s3_client = boto3.client(
     region_name=S3_REGION
 )
 
+# image_url로 다운로드
 def download_image(image_url: str) -> Optional[Image.Image]:
     try:
         if not image_url:
@@ -89,47 +85,18 @@ def upload_to_s3(image_bytes: bytes, s3_key: str, content_type: str = 'image/jpe
         print(f"S3 업로드 실패: {e}")
         return None
 
-def process_image_to_s3(db: Session, article_id: str) -> Dict:
-    article = get_article_by_id(db, article_id)
-    if not article:
-        raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
-    
-    image_url = article.original_image_url
+def process_image_to_s3(image_url:str) -> Dict:
 
-    if not image_url:
-        raise HTTPException(status_code=404, detail="이미지 URL이 없습니다.")
-    
-    result = {
-        "success": False,
-        "original_url": image_url,
-        "article_id": article_id,
-        "s3_urls": {
-            "thumbnail": None
-        },
-        "error": None
-    }
-    
     image = download_image(image_url)
 
     if not image:
-        result["error"] = "이미지 다운로드 실패"
+        result= "이미지 다운로드 실패"
         return result
     
     thumbnail = create_thumbnail(image)
     
     timestamp = str(uuid.uuid4())[:8]
-    thumbnail_key = f"thumbnails/{article_id}_{timestamp}_thumb.jpg"
-        
+    thumbnail_key = f"thumbnails/{timestamp}_thumb.jpg"
     thumbnail_bytes = image_to_bytes(thumbnail)
-    
-    if thumbnail_bytes:
-        thumbnail_url = upload_to_s3(thumbnail_bytes, thumbnail_key)
-        if thumbnail_url:
-            result["s3_urls"]["thumbnail"] = thumbnail_url
-            result["success"] = True
-            
-            # 데이터베이스에 썸네일 URL 저장
-            article.thumbnail_image_url = thumbnail_url
-            db.commit()
-    
-    return result
+
+    return upload_to_s3(thumbnail_bytes,thumbnail_key,content_type="image/jpeg")
