@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, Request, Response
 from app.routers import router
+from app.routers.tts import router as tts_router
 from .core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from app.core.database import Base
@@ -20,6 +21,7 @@ load_dotenv()
 app=FastAPI()  
 
 app.include_router(router)
+app.include_router(tts_router)
 # Create tables
 Base.metadata.create_all(bind=engine)
 # origins = [

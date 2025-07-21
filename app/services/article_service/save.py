@@ -10,33 +10,12 @@ import hashlib
 import os
 from dateutil import parser
 import logging
-
 from app.services.article_service.image_process import process_image_to_s3
+
+from app.celery_app import generate_tts_audio_async_task
 logger = logging.getLogger(__name__)
 
-def generate_audio_urls(title: str, article_id: str) -> tuple[str, str]:
-    """
-    기사 제목과 ID를 기반으로 오디오 URL 생성
-    
-    Args:
-        title: 기사 제목
-        article_id: 기사 ID
-    
-    Returns:
-        (male_audio_url, female_audio_url) 튜플
-    """
-    # 제목을 기반으로 한 해시 생성
-    title_hash = hashlib.md5(title.encode('utf-8')).hexdigest()[:8]
-    
-    # 오디오 파일명 생성
-    audio_filename = f"{article_id}_{title_hash}"
-    
-    # 오디오 URL 생성 (실제 오디오 생성 서비스 URL로 대체 필요)
-    base_audio_url = os.getenv('AUDIO_BASE_URL', 'https://api.example.com/audio')
-    male_audio_url = f"{base_audio_url}/male/{audio_filename}.mp3"
-    female_audio_url = f"{base_audio_url}/female/{audio_filename}.mp3"
-    
-    return male_audio_url, female_audio_url
+# generate_audio_urls 함수 삭제됨
 
 def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]:
 
@@ -97,30 +76,45 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         #썸네일 url 생성
         thumbnail_url=process_image_to_s3(article_data.get("image_url"))
         
-        # 오디오 URL 생성
-        male_audio_url, female_audio_url = generate_audio_urls(article_data['title'], article_id)
-        
+        # 카테고리 찾기 또는 생성
+        category_name = article_data.get('category') or ''
+        category = db.query(Category).filter(Category.category_name == category_name).first()
+        if not category:
+            category = Category(category_name=category_name)
+            db.add(category)
+            db.commit()
+            db.refresh(category)
+        # NewsArticle 객체 생성 (오디오 URL은 빈 값으로)
+
         news_article = NewsArticle(
             id=uuid.UUID(article_id),
             title=(article_data.get('title') or '')[:255],  # 길이 제한
             url=(article_data.get('url') or '')[:225],      # 길이 제한
             published_at=published_at,
             summary_text=(article_data.get('content') or '')[:10000],  # 텍스트 길이 제한
-            male_audio_url=male_audio_url,
-            female_audio_url=female_audio_url,
+            male_audio_url="",
+            female_audio_url="",
             category_name=(article_data.get('category') or '')[:30],  # 길이 제한
-            original_image_url=(article_data.get('image_url') or '')[:200], # 길이 제한
+            original_image_url=(article_data.get('image_url') or '')[:200], # 모델 필드명에 맞게
             thumbnail_image_url=thumbnail_url,
             author=(article_data.get('reporter_name') or '')[:20], # 길이 제한
             is_deleted=False,
             press_id=press.id,
-            category_id=category.id
+            category_id=category.id  # 반드시 실제 카테고리 ID 할당
+
         )
         
         # 데이터베이스에 저장
         db.add(news_article)
         db.commit()
         db.refresh(news_article)
+        
+        # TTS 오디오 생성 태스크 시작
+        try:
+            tts_task = generate_tts_audio_async_task(str(news_article.id))
+            logger.info(f"TTS 오디오 생성 태스크 시작: {tts_task['task_id']}")
+        except Exception as e:
+            logger.error(f"TTS 태스크 시작 실패: {e}")
         
         logger.info(f"기사 저장 완료: {news_article.title[:50]}...")
         return news_article
