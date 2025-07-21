@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.news_article import NewsArticle
 from app.models.press import Press
+from app.models.category import Category
 from typing import Dict, List, Optional
 import datetime
 import uuid
@@ -56,6 +57,19 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         db.refresh(press)
         logger.info(f"새 언론사 생성: {press.press_name}")
 
+        # 카테고리 ID 찾기 (category를 article_data에서 가져옴, 없으면 'general')
+        category_name = article_data.get('category', 'general')
+        category = db.query(Category).filter(
+            Category.category_name == category_name,
+            Category.is_deleted == False
+        ).first()
+
+        if not category:
+            category = Category(category_name=category_name)
+            db.add(category)
+            db.commit()
+            db.refresh(category)
+            logger.info(f"새 카테고리 생성: {category.category_name}")
 
     
         # 발행 시간 파싱
@@ -75,12 +89,14 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
             db.commit()
             db.refresh(category)
         # NewsArticle 객체 생성 (오디오 URL은 빈 값으로)
+
         news_article = NewsArticle(
             id=uuid.UUID(article_id),
             title=(article_data.get('title') or '')[:255],  # 길이 제한
             url=(article_data.get('url') or '')[:225],      # 길이 제한
             published_at=published_at,
             summary_text=(article_data.get('content') or '')[:10000],  # 텍스트 길이 제한
+
             male_audio_url="",
             female_audio_url="",
             cetagory_name=category_name[:30],  # 필드명 및 길이 수정
@@ -90,6 +106,7 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
             is_deleted=False,
             press_id=press.id,
             category_id=category.id  # 반드시 실제 카테고리 ID 할당
+
         )
         
         # 데이터베이스에 저장
