@@ -6,6 +6,7 @@ from app.services.crawling_service.async_article_hankyung import extract_hankyun
 from app.services.crawling_service.async_article_sbs import extract_sbs_article_async
 from app.services.crawling_service.async_article_mbn import extract_mbn_article_async
 from app.services.crawling_service.summarizer import summarize_article_with_gpt
+from app.celery_app import generate_tts_audio_async_task
 
 async def process_article_with_summary(session: aiohttp.ClientSession, article_url: str, category: str, press: str, 
                                      article_index: int, total_articles: int) -> Optional[Dict]:
