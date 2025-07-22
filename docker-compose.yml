@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+
   fastapi:
     build: .
     container_name: fastapi
@@ -15,6 +16,7 @@ services:
       - rabbitmq
       - redis
       - db
+      - opensearch
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -106,7 +108,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
     # pgAdmin 커넥션 위한 5432 포트매핑
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -119,6 +121,16 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - fastapi
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+    ports:
+      - 9200:9200
+      - 9600:9600
+
 
 volumes:
   postgres_data:
