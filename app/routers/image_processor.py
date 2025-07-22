@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.services.article_service.query import get_article_by_id
 from app.services.article_service.image_process import process_image_to_s3
-from app.celery_app import process_image_to_s3_async
+from app.celery_app import process_image_to_s3_async_task
 from app.core.database import get_db
 from sqlalchemy.orm import Session
 
@@ -20,7 +20,7 @@ async def process_image_endpoint(article_id: str, db: Session = Depends(get_db))
             raise HTTPException(status_code=400, detail="기사에 이미지 URL이 없습니다")
         
         # 비동기로 이미지 처리 시작
-        result = process_image_to_s3_async(article_id)
+        result = process_image_to_s3_async_task(article_id)
         
         return {
             "message": "이미지 처리가 백그라운드에서 시작되었습니다",

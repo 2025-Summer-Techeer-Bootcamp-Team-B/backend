@@ -5,8 +5,6 @@ from typing import Optional, Dict
 from app.services.crawling_service.async_article_hankyung import extract_hankyung_article_async
 from app.services.crawling_service.async_article_sbs import extract_sbs_article_async
 from app.services.crawling_service.async_article_mbn import extract_mbn_article_async
-from app.services.crawling_service.summarizer import summarize_article_with_gpt
-from app.celery_app import generate_tts_audio_async_task
 
 async def process_article_with_summary(session: aiohttp.ClientSession, article_url: str, category: str, press: str, 
                                      article_index: int, total_articles: int) -> Optional[Dict]:
@@ -32,13 +30,13 @@ async def process_article_with_summary(session: aiohttp.ClientSession, article_u
                 # URL이 중복으로 들어가지 않도록 확인
                 if details.get('url') != article_url:
                     details['url'] = article_url
-                try:
-                    summary = await asyncio.to_thread(summarize_article_with_gpt, content) ## 기사 요약 메서드 호출
-                    if summary:
-                        details['content'] = summary
-                        print(f"   ✅ GPT 요약 완료")
-                except Exception as summary_error:
-                    print(f"   ❌ 요약 중 오류: {summary_error}")
+                # try:
+                #     summary = await asyncio.to_thread(summarize_article_with_gpt, content) ## 기사 요약 메서드 호출
+                #     if summary:
+                #         details['content'] = summary
+                #         print(f"   ✅ GPT 요약 완료")
+                # except Exception as summary_error:
+                #     print(f"   ❌ 요약 중 오류: {summary_error}")
                 
                 print(f"   ✅ 기사 추출 완료:")
                 print(f"   " + "-" * 70)

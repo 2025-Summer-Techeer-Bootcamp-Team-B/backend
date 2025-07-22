@@ -28,6 +28,7 @@ def summarize_article_with_gpt(content: str) -> Optional[str]:
 2. 객관적이고 사실 중심으로 작성
 3. 한국어로 작성
 4. 불필요한 수식어나 반복 제거
+5. ~했습니다 형식으로 말하기
 """
         # GPT API 호출
         response = client.chat.completions.create(
