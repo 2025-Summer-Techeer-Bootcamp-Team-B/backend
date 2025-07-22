@@ -9,19 +9,19 @@ from app.core.database import SessionLocal
 from app.services.crawling_service.article_processor import process_article_with_summary
 
 RSS_FEEDS = {
-    "한국경제": {
+    # "한국경제": {
     #     # "전체뉴스": "https://www.hankyung.com/feed/all-news",
         # "증권": "https://www.hankyung.com/feed/finance",
-    #     # "경제": "https://www.hankyung.com/feed/economy",
-    #     # "부동산": "https://www.hankyung.com/feed/realestate",
-         "IT": "https://www.hankyung.com/feed/it",
+        # "경제": "https://www.hankyung.com/feed/economy",
+        # "부동산": "https://www.hankyung.com/feed/realestate",
+        #  "IT": "https://www.hankyung.com/feed/it",
     #     # "정치": "https://www.hankyung.com/feed/politics",
-         "국제": "https://www.hankyung.com/feed/international",
+        #  "국제": "https://www.hankyung.com/feed/international",
         #  "사회": "https://www.hankyung.com/feed/society",
         #   "문화": "https://www.hankyung.com/feed/life",
         #  "스포츠": "https://www.hankyung.com/feed/sports",
-    #     # "연예": "https://www.hankyung.com/feed/entertainment"
-    },
+        # "연예": "https://www.hankyung.com/feed/entertainment"
+    # },
     # "SBS뉴스": {
         # "이시각 이슈": "https://news.sbs.co.kr/news/headlineRssFeed.do?plink=RSSREADER",
         # "최신": "https://news.sbs.co.kr/news/newsflashRssFeed.do?plink=RSSREADER",
@@ -33,18 +33,18 @@ RSS_FEEDS = {
         # "연예": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=14&plink=RSSREADER",
         # "스포츠": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=09&plink=RSSREADER"
     # },
-    # "매일경제":{
+    "매일경제":{
     # # #     # "전체뉴스":"https://www.mk.co.kr/rss/40300001",
     # # #     "경제":"https://www.mk.co.kr/rss/30100041",
     #     #  "정치":"https://www.mk.co.kr/rss/30200030",
-    # #     # "사회":"https://www.mk.co.kr/rss/50400012",
-    # #     "국제":"https://www.mk.co.kr/rss/30300018",
-    # # #     "증권":"https://www.mk.co.kr/rss/50200011",
-    #      "부동산":"https://www.mk.co.kr/rss/50300009",
-    # # #     "문화":"https://www.mk.co.kr/rss/30000023",
+        "사회":"https://www.mk.co.kr/rss/50400012",
+        # "국제":"https://www.mk.co.kr/rss/30300018",
+        # "증권":"https://www.mk.co.kr/rss/50200011",
+        #  "부동산":"https://www.mk.co.kr/rss/50300009",
+        # "문화":"https://www.mk.co.kr/rss/30000023",
     # # #     "스포츠":"https://www.mk.co.kr/rss/71000001",
     # #     "IT":"https://www.mk.co.kr/rssㄴ/50700001"
-    # },
+    },
 }
 
 """카테고리별 비동기 크롤링"""
@@ -102,7 +102,7 @@ async def scrape_all_articles_async(max_concurrent: int = 10, save_to_db: bool =
     semaphore = asyncio.Semaphore(min(max_concurrent, 10))
     
     # aiohttp 세션 생성 (더 보수적인 설정)
-    connector = aiohttp.TCPConnector(limit=5, limit_per_host=3)
+    connector = aiohttp.TCPConnector(limit=10, limit_per_host=5)
     timeout = aiohttp.ClientTimeout(total=60)
     
     # 모든 카테고리를 동시에 처리
@@ -154,7 +154,3 @@ async def scrape_all_articles_async(max_concurrent: int = 10, save_to_db: bool =
         print("\n💾 데이터베이스 저장 건너뜀 (save_to_db=False)")
     
     return scraped_articles
-
-# def scrape_all_articles_sync(save_to_db: bool = True):
-#     """동기 버전 래퍼 (기존 코드와의 호환성을 위해)"""
-#     return asyncio.run(scrape_all_articles_async(save_to_db=save_to_db))
