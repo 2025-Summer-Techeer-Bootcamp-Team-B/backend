@@ -12,7 +12,8 @@ from dateutil import parser
 import logging
 from app.services.article_service.image_process import process_image_to_s3
 
-from app.celery_app import generate_tts_audio_async_task
+from app.celery_app import generate_tts_audio_async_task, process_image_to_s3_async_task
+from app.celery_app import summarize_article_with_gpt_async_task
 logger = logging.getLogger(__name__)
 
 # generate_audio_urls 함수 삭제됨
@@ -74,8 +75,8 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         article_id = str(uuid.uuid4())
 
         #썸네일 url 생성
-        thumbnail_url=process_image_to_s3(article_data.get("image_url"))
-        
+        # thumbnail_url=process_image_to_s3(article_data.get("image_url"))
+
         # 카테고리 찾기 또는 생성
         category_name = article_data.get('category') or ''
         category = db.query(Category).filter(Category.category_name == category_name).first()
@@ -96,7 +97,7 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
             female_audio_url="",
             category_name=(article_data.get('category') or '')[:30],  # 길이 제한
             original_image_url=(article_data.get('image_url') or '')[:200], # 모델 필드명에 맞게
-            thumbnail_image_url=thumbnail_url,
+            thumbnail_image_url="",
             author=(article_data.get('reporter_name') or '')[:20], # 길이 제한
             is_deleted=False,
             press_id=press.id,
@@ -109,12 +110,20 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         db.commit()
         db.refresh(news_article)
         
-        # TTS 오디오 생성 태스크 시작
+        
+        # 기사 요약 Celery 태스크 시작
         try:
-            tts_task = generate_tts_audio_async_task(str(news_article.id))
-            logger.info(f"TTS 오디오 생성 태스크 시작: {tts_task['task_id']}")
+            summary_task = summarize_article_with_gpt_async_task(str(news_article.id))
+            logger.info(f"기사 요약 Celery 태스크 시작: {summary_task['task_id']}")
         except Exception as e:
-            logger.error(f"TTS 태스크 시작 실패: {e}")
+            logger.error(f"기사 요약 Celery 태스크 시작 실패: {e}")
+        
+        #썸네일 이미지 생성 Celery 태스크 시작
+        try:
+            image_task = process_image_to_s3_async_task(str(news_article.id))
+            logger.info(f"이미지 썸네일 생성 태스크 시작: {image_task['task_id']}")
+        except Exception as e:
+            logger.error(f"이미지 썸네일 태스크 시작 실패: {e}")
         
         logger.info(f"기사 저장 완료: {news_article.title[:50]}...")
         return news_article
@@ -122,7 +131,9 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
     except Exception as e:
         logger.error(f"기사 저장 실패: {e}")
         db.rollback()
-        return None
+    finally:
+        db.close()
+    return None
 
 def save_articles_batch(db: Session, articles: List[Dict]) -> Dict[str, int]:
     """
@@ -186,6 +197,3 @@ def parse_published_time(time_str: Optional[str]) -> datetime.datetime:
     except Exception as e:
         logger.warning(f"시간 파싱 실패: {time_str} ({e})")
         return datetime.datetime.now(KST)
-
-
-

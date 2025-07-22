@@ -10,7 +10,6 @@ from app.services.crawling_service.article_processor import process_article_with
 
 RSS_FEEDS = {
     "한국경제": {
-        "전체뉴스": "https://www.hankyung.com/feed/all-news",
         "증권": "https://www.hankyung.com/feed/finance",
         "경제": "https://www.hankyung.com/feed/economy",
         "부동산": "https://www.hankyung.com/feed/realestate",
@@ -99,7 +98,7 @@ async def scrape_all_articles_async(max_concurrent: int = 10, save_to_db: bool =
     semaphore = asyncio.Semaphore(min(max_concurrent, 10))
     
     # aiohttp 세션 생성 (더 보수적인 설정)
-    connector = aiohttp.TCPConnector(limit=5, limit_per_host=3)
+    connector = aiohttp.TCPConnector(limit=10, limit_per_host=5)
     timeout = aiohttp.ClientTimeout(total=60)
     
     # 모든 카테고리를 동시에 처리
@@ -151,7 +150,3 @@ async def scrape_all_articles_async(max_concurrent: int = 10, save_to_db: bool =
         print("\n💾 데이터베이스 저장 건너뜀 (save_to_db=False)")
     
     return scraped_articles
-
-# def scrape_all_articles_sync(save_to_db: bool = True):
-#     """동기 버전 래퍼 (기존 코드와의 호환성을 위해)"""
-#     return asyncio.run(scrape_all_articles_async(save_to_db=save_to_db))
