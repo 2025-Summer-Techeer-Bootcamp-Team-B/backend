@@ -30,3 +30,7 @@ class ArticleRecentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ArticleDeleteResponse(BaseModel):
+    message: str
+    article_id: str

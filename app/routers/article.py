@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from uuid import UUID
 from app.core.database import get_db
-from app.schemas.article import ArticleDetailResponse, ArticleRecentResponse
+from app.schemas.article import ArticleDetailResponse, ArticleRecentResponse, ArticleDeleteResponse
 from app.services.article_service.query import get_article_by_id, get_article_recent, get_articles_by_category_and_user_press, delete_article
 
 router = APIRouter(prefix="/articles",tags=["Articles"])
@@ -33,11 +33,11 @@ def get_articles_by_category_and_user_press_router(user_id: str, category_name: 
     return articles
 
 #기사 삭제하기
-@router.delete("/{article_id}")
+@router.delete("/{article_id}", response_model=ArticleDeleteResponse)
 def delete_article_inform(article_id: str, db: Session = Depends(get_db)):
     result = delete_article(db, article_id)
     if result:
-        return {"message": "기사 삭제 완료", "article_id": article_id}
+        return ArticleDeleteResponse(message="기사 삭제 완료", article_id=article_id)
     else:
         raise HTTPException(status_code=404, detail="삭제할 기사를 찾을 수 없습니다.")
     
