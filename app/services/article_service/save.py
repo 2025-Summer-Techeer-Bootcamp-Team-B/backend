@@ -77,6 +77,16 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         #썸네일 url 생성
         # thumbnail_url=process_image_to_s3(article_data.get("image_url"))
 
+        # 카테고리 찾기 또는 생성
+        category_name = article_data.get('category') or ''
+        category = db.query(Category).filter(Category.category_name == category_name).first()
+        if not category:
+            category = Category(category_name=category_name)
+            db.add(category)
+            db.commit()
+            db.refresh(category)
+        # NewsArticle 객체 생성 (오디오 URL은 빈 값으로)
+
         news_article = NewsArticle(
             id=uuid.UUID(article_id),
             title=(article_data.get('title') or '')[:255],  # 길이 제한

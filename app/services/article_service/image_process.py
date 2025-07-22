@@ -8,8 +8,6 @@ from typing import Tuple, Optional, Dict
 import os
 from dotenv import load_dotenv
 
-from app.models.news_article import NewsArticle
-
 load_dotenv()
 
 S3_BUCKET = os.getenv('AWS_S3_BUCKET', 'your-bucket-name')
@@ -87,53 +85,18 @@ def upload_to_s3(image_bytes: bytes, s3_key: str, content_type: str = 'image/jpe
         print(f"S3 업로드 실패: {e}")
         return None
 
-def process_image_to_s3(db, article_id: str):
-    article = db.query(NewsArticle).filter(NewsArticle.id == article_id).first()
-    if not article:
-        return {
-            "success": False,
-            "error": "기사를 찾을 수 없습니다.",
-            "article_id": article_id
-        }
-
-    image_url = article.original_image_url
+def process_image_to_s3(image_url:str) -> Dict:
 
     image = download_image(image_url)
+
     if not image:
-        return {
-            "success": False,
-            "error": "이미지 다운로드 실패",
-            "article_id": article_id,
-            "image_url": image_url
-        }
-
-    thumbnail = create_thumbnail(image)
-    thumbnail_bytes = image_to_bytes(thumbnail)
-    if not thumbnail_bytes:
-        return {
-            "success": False,
-            "error": "이미지 변환 실패",
-            "article_id": article_id,
-            "image_url": image_url
-        }
-
-    thumbnail_key = f"thumbnails/{str(uuid.uuid4())[:8]}_thumb.jpg"
-    thumbnail_url = upload_to_s3(thumbnail_bytes, thumbnail_key)
-    if not thumbnail_url:
-        return {
-            "success": False,
-            "error": "S3 업로드 실패",
-            "article_id": article_id,
-            "image_url": image_url
-        }
-
-    article.thumbnail_image_url = thumbnail_url
-    db.commit()
-    db.refresh(article)
-    return {
-        "success": True,
-        "article_id": article_id,
-        "image_url": image_url,
-        "thumbnail_url": thumbnail_url
-    }
+        result= "이미지 다운로드 실패"
+        return result
     
+    thumbnail = create_thumbnail(image)
+    
+    timestamp = str(uuid.uuid4())[:8]
+    thumbnail_key = f"thumbnails/{timestamp}_thumb.jpg"
+    thumbnail_bytes = image_to_bytes(thumbnail)
+
+    return upload_to_s3(thumbnail_bytes,thumbnail_key,content_type="image/jpeg")
