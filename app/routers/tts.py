@@ -5,11 +5,12 @@ from app.models.news_article import NewsArticle
 from app.celery_app import generate_tts_audio_async_task
 from celery.result import AsyncResult
 from typing import Dict
+from app.schemas.tts import TTSRequest, TTSResponse, TTSStatusResponse, ArticleAudioResponse
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 
-@router.post("/generate/{article_id}")
-async def generate_tts_for_article(article_id: str, db: Session = Depends(get_db)):
+@router.post("/generate/{article_id}", response_model=TTSResponse)
+async def generate_tts_for_article(article_id: str, request: TTSRequest = None, db: Session = Depends(get_db)):
     """
     특정 기사에 대한 TTS 오디오 생성 요청
     """
@@ -21,13 +22,13 @@ async def generate_tts_for_article(article_id: str, db: Session = Depends(get_db
     # TTS 태스크 시작
     task_result = generate_tts_audio_async_task(article_id)
     
-    return {
-        "message": "TTS 오디오 생성이 시작되었습니다.",
-        "task_id": task_result["task_id"],
-        "status": task_result["status"]
-    }
+    return TTSResponse(
+        message="TTS 오디오 생성이 시작되었습니다.",
+        task_id=task_result["task_id"],
+        status=task_result["status"]
+    )
 
-@router.get("/status/{task_id}")
+@router.get("/status/{task_id}", response_model=TTSStatusResponse)
 async def get_tts_status(task_id: str):
     """
     TTS 생성 태스크 상태 확인
@@ -37,22 +38,13 @@ async def get_tts_status(task_id: str):
     if task_result.ready():
         if task_result.successful():
             result = task_result.result
-            return {
-                "status": "completed",
-                "result": result
-            }
+            return TTSStatusResponse(status="completed", result=result)
         else:
-            return {
-                "status": "failed",
-                "error": str(task_result.result)
-            }
+            return TTSStatusResponse(status="failed", error=str(task_result.result))
     else:
-        return {
-            "status": "processing",
-            "task_id": task_id
-        }
+        return TTSStatusResponse(status="processing", task_id=task_id)
 
-@router.get("/article/{article_id}/audio")
+@router.get("/article/{article_id}/audio", response_model=ArticleAudioResponse)
 async def get_article_audio(article_id: str, db: Session = Depends(get_db)):
     """
     기사의 오디오 URL 조회
@@ -61,10 +53,10 @@ async def get_article_audio(article_id: str, db: Session = Depends(get_db)):
     if not article:
         raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
     
-    return {
-        "article_id": str(article.id),
-        "title": article.title,
-        "male_audio_url": article.male_audio_url,
-        "female_audio_url": article.female_audio_url,
-        "has_audio": bool(article.male_audio_url and article.female_audio_url)
-    } 
+    return ArticleAudioResponse(
+        article_id=str(article.id),
+        title=article.title,
+        male_audio_url=article.male_audio_url,
+        female_audio_url=article.female_audio_url,
+        has_audio=bool(article.male_audio_url and article.female_audio_url)
+    ) 

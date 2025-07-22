@@ -28,3 +28,7 @@ class UserHistory(BaseModel):
     url: str
     category: str
     viewed_at: datetime
+
+class EmailExistsResponse(BaseModel):
+    exists: bool
+    email: str
