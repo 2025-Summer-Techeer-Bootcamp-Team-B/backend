@@ -8,22 +8,6 @@ services:
       - "8000:8000"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload # 로컬 환경에서만 --reload를 사용하도록 함
     volumes:
-      - .:/app   
-    env_file:
-      - .env
-    depends_on:
-      - rabbitmq
-      - redis
-      - db
-    environment:
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-
-  celery:
-    build: .
-    container_name: celery
-    command: celery -A app.celery_app.celery_app worker --loglevel=info
-    volumes:
       - .:/app
     env_file:
       - .env
@@ -34,6 +18,65 @@ services:
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  # celery:
+  #   build: .
+  #   container_name: celery
+  #   command: celery -A app.celery_app.celery_app worker --loglevel=info --concurrency=8
+  #   volumes:
+  #     - .:/app
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - rabbitmq
+  #     - redis
+  #     - db
+  #   environment:
+  #     - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  celery-worker-gpt:
+    build: .
+    container_name: celery-worker-gpt
+    command: celery -A app.celery_app worker --loglevel=info -Q gpt -n gpt@%h --concurrency=8
+    depends_on:
+      - rabbitmq
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0  
+    volumes:
+      - .:/app
+
+  celery-worker-tts:
+    build: .
+    container_name: celery-worker-tts
+    command: celery -A app.celery_app worker --loglevel=info -Q tts -n tts@%h 
+    depends_on:
+      - rabbitmq
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0  
+    volumes:
+      - .:/app
+
+  celery-worker-image:
+    build: .
+    container_name: celery-worker-image
+    command: celery -A app.celery_app worker --loglevel=info -Q image -n image@%h 
+    depends_on:
+      - rabbitmq
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -63,7 +106,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
     # pgAdmin 커넥션 위한 5432 포트매핑
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
