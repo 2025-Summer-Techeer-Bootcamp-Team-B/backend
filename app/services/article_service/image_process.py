@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-S3_BUCKET = os.getenv('S3_BUCKET', 'newsbriefing-bucket')
-S3_REGION = os.getenv('S3_REGION', 'ap-northeast-2')
+S3_BUCKET = os.getenv('AWS_S3_BUCKET', 'your-bucket-name')
+S3_REGION = os.getenv('AWS_REGION', 'ap-northeast-2')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 

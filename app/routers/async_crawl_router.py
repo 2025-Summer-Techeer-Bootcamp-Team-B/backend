@@ -10,7 +10,6 @@ from app.core.database import SessionLocal, get_db
 from app.services.recommend_service import recommend_articles_for_user, create_news_index, index_all_articles
 from typing import List
 
-
 router = APIRouter(prefix="/test",tags=["Test"])
 
 
@@ -34,66 +33,7 @@ async def crawl_articles_async(save_to_db: bool = True):
     except Exception as e:
         print(f"❌ API 비동기 크롤링 실패: {e}")
         raise HTTPException(status_code=500, detail=f"크롤링 실패: {str(e)}")
-
-"""저장된 최근 기사 20개 조회"""
-@router.get("/recent_articles")
-async def get_saved_articles(limit: int = 20, category: Optional[str] = None):
-    try:
-        db = SessionLocal()
-        try:
-            if category:
-            #     articles = get_articles_by_category(db, category, limit)
-            # else:
-                articles = get_recent_articles(db, limit)
-            
-            # SQLAlchemy 객체를 딕셔너리로 변환
-            articles_data = []
-            for article in articles:
-                article_dict = {
-                    "id": str(article.id),
-                    "title": article.title,
-                    "url": article.url,
-                    "summary_text": article.summary_text,
-                    "categories": article.categories,
-                    "image_url": article.image_url,
-                    "author": article.author
-                }
-                
-                # datetime 필드 안전하게 처리
-                try:
-                    if article.published_at:
-                        article_dict["published_at"] = article.published_at.isoformat()
-                    else:
-                        article_dict["published_at"] = None
-                except:
-                    article_dict["published_at"] = None
-                
-                try:
-                    if article.created_at:
-                        article_dict["created_at"] = article.created_at.isoformat()
-                    else:
-                        article_dict["created_at"] = None
-                except:
-                    article_dict["created_at"] = None
-                
-                articles_data.append(article_dict)
-            
-            return {
-                "success": True,
-                "articles": articles_data,
-                "count": len(articles_data),
-                "category": category,
-                "limit": limit
-            }
-            
-        finally:
-            db.close()
-            
-    except Exception as e:
-        print(f"❌ 기사 조회 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"기사 조회 실패: {str(e)}") 
-
-
+        
 #키워드 관련 기사 조회
 @router.post("/recommend", response_model=List[ArticleResponse])
 def recommend_articles(req: UserKeywordRequest, db: session = Depends(get_db)):
