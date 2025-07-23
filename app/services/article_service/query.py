@@ -8,8 +8,19 @@ from app.models.user_preferred_press import UserPreferredPress
 
 # 실시간 뉴스 조회 20개까지
 def get_article_recent(db: Session, limit: int = 20) -> List[NewsArticle]:
+    # 모든 주요 필드가 None/빈 문자열이 아닌 기사만 반환
     return db.query(NewsArticle).filter(
-        NewsArticle.is_deleted == False
+        NewsArticle.is_deleted == False,
+        NewsArticle.title.isnot(None), NewsArticle.title != '',
+        NewsArticle.url.isnot(None), NewsArticle.url != '',
+        NewsArticle.published_at.isnot(None),
+        NewsArticle.summary_text.isnot(None), NewsArticle.summary_text != '',
+        NewsArticle.male_audio_url.isnot(None), NewsArticle.male_audio_url != '',
+        NewsArticle.female_audio_url.isnot(None), NewsArticle.female_audio_url != '',
+        NewsArticle.original_image_url.isnot(None), NewsArticle.original_image_url != '',
+        NewsArticle.thumbnail_image_url.isnot(None), NewsArticle.thumbnail_image_url != '',
+        NewsArticle.author.isnot(None), NewsArticle.author != '',
+        NewsArticle.category_name.isnot(None), NewsArticle.category_name != ''
     ).order_by(NewsArticle.published_at.desc()).limit(limit).all()
 
 # 뉴스 상세 조회
@@ -54,3 +65,5 @@ def delete_article(db: Session, article_id: str) -> bool:
     except Exception:
         db.rollback()
         return False
+
+
