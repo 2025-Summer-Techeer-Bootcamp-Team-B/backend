@@ -1,9 +1,12 @@
+import datetime
 from typing import List
 from uuid import UUID
 from dotenv.main import logger
 from sqlalchemy.orm import Session
+from app.models.article_history import ArticleHistory
 from app.models.news_article import NewsArticle
 from app.models.user_preferred_press import UserPreferredPress
+from app.services.article_service.save import KST
 
 
 # 실시간 뉴스 조회 20개까지
@@ -66,4 +69,32 @@ def delete_article(db: Session, article_id: str) -> bool:
         db.rollback()
         return False
 
+#   사용자가 기사를 읽으면 ArticleHistory에 viewed_at을 KST로 기록
+def mark_article_as_viewed(db: Session, user_id: str, article_id: str) -> bool:
+    now = datetime.datetime.now(KST)
+    try:
+        history = db.query(ArticleHistory).filter(
+            ArticleHistory.user_id == user_id,
+            ArticleHistory.news_id == article_id,
+            ArticleHistory.is_deleted == False
+        ).first()
+        if history:
+            history.viewed_at = now
+            db.commit()
+            db.refresh(history)
+            return True
+        new_history = ArticleHistory(
+            user_id=user_id,
+            news_id=article_id,
+            viewed_at=now,
+            is_deleted=False
+        )
+        db.add(new_history)
+        db.commit()
+        db.refresh(new_history)
+        return True
+    except Exception as e:
+        db.rollback()
+        logger.error(f"기사 읽음 처리 실패: {e}")
+        return False
 
