@@ -1,14 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import Optional
 import time
 from datetime import datetime
-from sqlalchemy.orm import session
-from app.schemas.article_recommend import ArticleResponse, UserKeywordRequest
 from app.services.crawling_service.async_crawler import scrape_all_articles_async
 from app.schemas.news_crawl import NewsCrawlResponse, NewsCrawledArticle
-from app.core.database import SessionLocal, get_db
-from app.services.recommend_service import create_news_index, index_all_articles, recommend_articles_for_user_async
-from typing import List
+from app.core.database import SessionLocal
 
 router = APIRouter(prefix="/test",tags=["Test"])
 
@@ -32,12 +28,3 @@ async def crawl_articles_async(save_to_db: bool = True):
         print(f"❌ API 비동기 크롤링 실패: {e}")
         raise HTTPException(status_code=500, detail=f"크롤링 실패: {str(e)}")
         
-#키워드 관련 기사 조회
-@router.post("/recommend", response_model=List[ArticleResponse])
-async def recommend_articles(req: UserKeywordRequest, db: session = Depends(get_db)):
-    create_news_index()  # 인덱스가 없으면 생성, 있으면 무시
-    await index_all_articles(db)  # DB의 기사들을 OpenSearch에 인덱싱 (await 추가)
-    results = await recommend_articles_for_user_async(req.user_id, db)
-    if not results:
-        raise HTTPException(status_code=404, detail="No articles found")
-    return [ArticleResponse(**r) for r in results] 

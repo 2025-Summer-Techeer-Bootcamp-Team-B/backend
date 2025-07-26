@@ -7,6 +7,9 @@ from app.models.article_history import ArticleHistory
 from app.models.news_article import NewsArticle
 from app.models.user_preferred_press import UserPreferredPress
 from app.services.article_service.save import KST
+from app.models.user_preferred_press import UserPreferredPress
+from app.models.user_category import UserCategory
+from app.utils.check_today import get_today_range_kst
 
 
 # 실시간 뉴스 조회 20개까지
@@ -14,16 +17,16 @@ def get_article_recent(db: Session, limit: int = 20) -> List[NewsArticle]:
     # 모든 주요 필드가 None/빈 문자열이 아닌 기사만 반환
     return db.query(NewsArticle).filter(
         NewsArticle.is_deleted == False,
-        NewsArticle.title.isnot(None), NewsArticle.title != '',
-        NewsArticle.url.isnot(None), NewsArticle.url != '',
-        NewsArticle.published_at.isnot(None),
-        NewsArticle.summary_text.isnot(None), NewsArticle.summary_text != '',
-        NewsArticle.male_audio_url.isnot(None), NewsArticle.male_audio_url != '',
-        NewsArticle.female_audio_url.isnot(None), NewsArticle.female_audio_url != '',
-        NewsArticle.original_image_url.isnot(None), NewsArticle.original_image_url != '',
-        NewsArticle.thumbnail_image_url.isnot(None), NewsArticle.thumbnail_image_url != '',
-        NewsArticle.author.isnot(None), NewsArticle.author != '',
-        NewsArticle.category_name.isnot(None), NewsArticle.category_name != ''
+        # NewsArticle.title.isnot(None), NewsArticle.title != '',
+        # NewsArticle.url.isnot(None), NewsArticle.url != '',
+        # NewsArticle.published_at.isnot(None),
+        # NewsArticle.summary_text.isnot(None), NewsArticle.summary_text != '',
+        # NewsArticle.male_audio_url.isnot(None), NewsArticle.male_audio_url != '',
+        # NewsArticle.female_audio_url.isnot(None), NewsArticle.female_audio_url != '',
+        # NewsArticle.original_image_url.isnot(None), NewsArticle.original_image_url != '',
+        # NewsArticle.thumbnail_image_url.isnot(None), NewsArticle.thumbnail_image_url != '',
+        # NewsArticle.author.isnot(None), NewsArticle.author != '',
+        # NewsArticle.category_name.isnot(None), NewsArticle.category_name != ''
     ).order_by(NewsArticle.published_at.desc()).limit(limit).all()
 
 # 뉴스 상세 조회
@@ -97,4 +100,32 @@ def mark_article_as_viewed(db: Session, user_id: str, article_id: str) -> bool:
         db.rollback()
         logger.error(f"기사 읽음 처리 실패: {e}")
         return False
+
+def get_user_preferred_articles(db: Session, user_id: str) -> List[NewsArticle]:
+    """
+    사용자가 지정한 언론사와 관심 카테고리의 '오늘' 기사만 반환
+    """
+    # 1. 사용자의 선호 언론사 id 목록
+    press_ids = db.query(UserPreferredPress.press_id).filter(
+        UserPreferredPress.user_id == user_id,
+        UserPreferredPress.is_deleted == False
+    ).all()
+    press_ids = [pid[0] for pid in press_ids]
+    # 2. 사용자의 관심 카테고리 id 목록
+    category_ids = db.query(UserCategory.category_id).filter(
+        UserCategory.user_id == user_id,
+        UserCategory.is_deleted == False
+    ).all()
+    category_ids = [cid[0] for cid in category_ids]
+    # 3. 오늘 날짜 범위
+    start, end = get_today_range_kst()
+    # 4. 해당 언론사+카테고리+오늘 기사만 반환
+    articles = db.query(NewsArticle).filter(
+        NewsArticle.press_id.in_(press_ids),
+        NewsArticle.category_id.in_(category_ids),
+        NewsArticle.is_deleted == False,
+        NewsArticle.published_at >= start,
+        NewsArticle.published_at < end
+    ).order_by(NewsArticle.published_at.desc()).all()
+    return articles
 
