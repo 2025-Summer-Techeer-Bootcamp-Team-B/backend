@@ -40,7 +40,7 @@ services:
   celery-worker-tts:
     build: .
     container_name: celery-worker-tts
-    command: celery -A app.celery_app worker --loglevel=info -Q tts -n tts@%h --concurrency=6
+    command: celery -A app.celery_app worker --loglevel=info -Q tts -n tts@%h --concurrency=8
     depends_on:
       - rabbitmq
       - redis
@@ -65,6 +65,22 @@ services:
     volumes:
       - .:/app
 
+  flower:
+    build: .
+    container_name: flower
+    command: celery -A app.celery_app.celery_app flower --port=5555 --broker=amqp://guest:guest@rabbitmq:5672//
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery-worker-tts
+      - celery-worker-image
+      - rabbitmq
+      - redis
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
 
   rabbitmq:
     image: rabbitmq:3-management
