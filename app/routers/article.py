@@ -1,20 +1,13 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from fastapi import Request
 from uuid import UUID
 from app.core.database import get_db
 from app.schemas.article import ArticleDetailResponse, ArticleRecentResponse, ArticleDeleteResponse
-from app.services.article_service.query import get_article_by_id, get_article_recent, get_articles_by_category_and_user_press, delete_article
+from app.services.article_service.query import get_article_by_id, get_article_recent, get_articles_by_category_and_user_press, delete_article, mark_article_as_viewed
 
 router = APIRouter(prefix="/articles",tags=["Articles"])
-
-#뉴스 상세 조회 하기
-@router.get("/{article_id}", response_model=ArticleDetailResponse)
-def get_article_detail(article_id: UUID, db: Session = Depends(get_db)):
-    article = get_article_by_id(db, article_id)
-    if not article:
-        raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
-    return article
 
 #실시간 뉴스 가져오기 (20개)
 @router.get("/recent", response_model=List[ArticleRecentResponse])
@@ -24,8 +17,22 @@ def read_recent_articles(limit: int = 20, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="실시간 뉴스를 가져올 수 없습니다.")
     return articles
 
+#뉴스 상세 조회 하기
+@router.get("/{article_id}", response_model=ArticleDetailResponse)
+def get_article_detail(request: Request,article_id: UUID, db: Session = Depends(get_db)):
+    user_id = request.state.user_id
+
+    article = get_article_by_id(db, article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
+    # 읽음 기록 저장
+    read_status = mark_article_as_viewed(db, user_id, article_id)
+    if not read_status:
+        raise HTTPException(status_code=400, detail="읽음 기록 저장 실패")
+    return article
+
 #사용자 관심 카테고리 뉴스 가져오기
-@router.get("/", response_model=List[ArticleRecentResponse])
+@router.get("/preference_category_article", response_model=List[ArticleRecentResponse])
 def get_articles_by_category_and_user_press_router(user_id: str, category_name: str, db: Session = Depends(get_db)):
     articles = get_articles_by_category_and_user_press(db, user_id, category_name)
     if not articles:

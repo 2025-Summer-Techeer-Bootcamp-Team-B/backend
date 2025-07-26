@@ -6,9 +6,8 @@ from sqlalchemy.orm import session
 from app.schemas.article_recommend import ArticleResponse, UserKeywordRequest
 from app.services.crawling_service.async_crawler import scrape_all_articles_async
 from app.schemas.news_crawl import NewsCrawlResponse, NewsCrawledArticle
-from app.services.article_service.query import get_recent_articles
 from app.core.database import SessionLocal, get_db
-from app.services.recommend_service import recommend_articles_for_user, create_news_index, index_all_articles
+from app.services.recommend_service import create_news_index, index_all_articles, recommend_articles_for_user_async
 from typing import List
 
 router = APIRouter(prefix="/test",tags=["Test"])
@@ -35,10 +34,10 @@ async def crawl_articles_async(save_to_db: bool = True):
         
 #키워드 관련 기사 조회
 @router.post("/recommend", response_model=List[ArticleResponse])
-def recommend_articles(req: UserKeywordRequest, db: session = Depends(get_db)):
+async def recommend_articles(req: UserKeywordRequest, db: session = Depends(get_db)):
     create_news_index()  # 인덱스가 없으면 생성, 있으면 무시
-    index_all_articles(db)  # DB의 기사들을 OpenSearch에 인덱싱
-    results = recommend_articles_for_user(req.user_id, db)
+    await index_all_articles(db)  # DB의 기사들을 OpenSearch에 인덱싱 (await 추가)
+    results = await recommend_articles_for_user_async(req.user_id, db)
     if not results:
         raise HTTPException(status_code=404, detail="No articles found")
     return [ArticleResponse(**r) for r in results] 

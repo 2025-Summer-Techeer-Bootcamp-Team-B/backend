@@ -10,13 +10,10 @@ import hashlib
 import os
 from dateutil import parser
 import logging
-from app.services.article_service.image_process import process_image_to_s3
-
-from app.celery_app import generate_tts_audio_async_task, process_image_to_s3_async_task
-from app.celery_app import summarize_article_with_gpt_async_task
+from app.celery_app import process_image_to_s3_async_task
+from app.celery_app import generate_tts_audio_async_task
 logger = logging.getLogger(__name__)
 
-# generate_audio_urls 함수 삭제됨
 
 def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]:
 
@@ -42,7 +39,6 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
             Press.press_name == press_name,
             Press.is_deleted == False
         ).first()
-
 
         if not press:
             press = Press(press_name=press_name)
@@ -70,22 +66,8 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         published_at = parse_published_time(article_data.get('published_time'))
         if not published_at:
             published_at = datetime.datetime.now(datetime.timezone.utc)
-        
         # 기사 ID 생성
         article_id = str(uuid.uuid4())
-
-        #썸네일 url 생성
-        # thumbnail_url=process_image_to_s3(article_data.get("image_url"))
-
-        # 카테고리 찾기 또는 생성
-        category_name = article_data.get('category') or ''
-        category = db.query(Category).filter(Category.category_name == category_name).first()
-        if not category:
-            category = Category(category_name=category_name)
-            db.add(category)
-            db.commit()
-            db.refresh(category)
-        # NewsArticle 객체 생성 (오디오 URL은 빈 값으로)
 
         news_article = NewsArticle(
             id=uuid.UUID(article_id),
@@ -109,21 +91,20 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         db.add(news_article)
         db.commit()
         db.refresh(news_article)
-        
-        
-        # 기사 요약 Celery 태스크 시작
-        try:
-            summary_task = summarize_article_with_gpt_async_task(str(news_article.id))
-            logger.info(f"기사 요약 Celery 태스크 시작: {summary_task['task_id']}")
-        except Exception as e:
-            logger.error(f"기사 요약 Celery 태스크 시작 실패: {e}")
-        
-        #썸네일 이미지 생성 Celery 태스크 시작
-        try:
-            image_task = process_image_to_s3_async_task(str(news_article.id))
-            logger.info(f"이미지 썸네일 생성 태스크 시작: {image_task['task_id']}")
-        except Exception as e:
-            logger.error(f"이미지 썸네일 태스크 시작 실패: {e}")
+
+        #tts 생성 Celery 테스크 시작
+        # try:
+        #     tts_task = generate_tts_audio_async_task(str(news_article.id))
+        #     logger.info(f"TTS Celery 태스크 시작: {tts_task['task_id']}")
+        # except Exception as e:
+        #     logger.error(f"TTS Celery 태스크 시작 실패: {e}")
+
+        # #썸네일 이미지 생성 Celery 태스크 시작
+        # try:
+        #     image_task = process_image_to_s3_async_task(str(news_article.id))
+        #     logger.info(f"이미지 썸네일 생성 태스크 시작: {image_task['task_id']}")
+        # except Exception as e:
+        #     logger.error(f"이미지 썸네일 태스크 시작 실패: {e}")
         
         logger.info(f"기사 저장 완료: {news_article.title[:50]}...")
         return news_article

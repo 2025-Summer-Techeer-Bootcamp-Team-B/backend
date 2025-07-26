@@ -4,11 +4,6 @@ from app.routers.tts import router as tts_router
 from .core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from app.core.database import Base
-from app.models.user import User
-from app.models.user_keyword import UserKeyword
-from app.models.user_preferred_press import UserPreferredPress
-from app.models.article_history import ArticleHistory
-from app.models.press import Press
 from app.models.news_article import NewsArticle
 from fastapi.middleware.cors import CORSMiddleware
 # from starlette.middleware.sessions import SessionMiddleware

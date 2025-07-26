@@ -37,24 +37,10 @@ services:
   #     - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
   #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-  celery-worker-gpt:
-    build: .
-    container_name: celery-worker-gpt
-    command: celery -A app.celery_app worker --loglevel=info -Q gpt -n gpt@%h --concurrency=8
-    depends_on:
-      - rabbitmq
-      - redis
-      - db
-    environment:
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0  
-    volumes:
-      - .:/app
-
   celery-worker-tts:
     build: .
     container_name: celery-worker-tts
-    command: celery -A app.celery_app worker --loglevel=info -Q tts -n tts@%h 
+    command: celery -A app.celery_app worker --loglevel=info -Q tts -n tts@%h --concurrency=6
     depends_on:
       - rabbitmq
       - redis
@@ -68,7 +54,7 @@ services:
   celery-worker-image:
     build: .
     container_name: celery-worker-image
-    command: celery -A app.celery_app worker --loglevel=info -Q image -n image@%h 
+    command: celery -A app.celery_app worker --loglevel=info -Q image -n image@%h --concurrency=6
     depends_on:
       - rabbitmq
       - redis
@@ -87,7 +73,7 @@ services:
       - "5672:5672"  # AMQP 포트
       - "15672:15672"  # RabbitMQ 관리 콘솔 포트
       - "15692:15692" # metrics 포트
-    restart: always # 연결 끊어질시 다시 시작용
+    # restart: always # 연결 끊어질시 다시 시작용
     tty: true # 끊어짐 방지
     environment:
       - RABBITMQ_DEFAULT_USER=guest # 유저
@@ -108,7 +94,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
     # pgAdmin 커넥션 위한 5432 포트매핑
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -7,10 +7,12 @@ import uuid
 from typing import Tuple, Optional, Dict
 import os
 from dotenv import load_dotenv
+from app.core.database import get_db
+from app.models.news_article import NewsArticle
 
 load_dotenv()
 
-S3_BUCKET = os.getenv('AWS_S3_BUCKET', 'your-bucket-name')
+S3_BUCKET = os.getenv('AWS_S3_BUCKET', 'newsbriefing-bucket')
 S3_REGION = os.getenv('AWS_REGION', 'ap-northeast-2')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
@@ -85,18 +87,42 @@ def upload_to_s3(image_bytes: bytes, s3_key: str, content_type: str = 'image/jpe
         print(f"S3 업로드 실패: {e}")
         return None
 
-def process_image_to_s3(image_url:str) -> Dict:
+def process_image_to_s3(article_id: str) -> Dict:
+    db = next(get_db())
+    try:
+        article = db.query(NewsArticle).filter(NewsArticle.id == article_id).first()
+        if not article:
+            return {"success": False, "error": "해당 article_id의 뉴스 기사가 존재하지 않습니다."}
+        image = download_image(article.original_image_url)
+        if not image:
+            return {"success": False, "error": "이미지 다운로드 실패"}
+        thumbnail = create_thumbnail(image)
+        timestamp = str(uuid.uuid4())[:8]
+        thumbnail_key = f"thumbnails/{timestamp}_thumb.jpg"
+        thumbnail_bytes = image_to_bytes(thumbnail)
+        thumbnail_url = upload_to_s3(thumbnail_bytes, thumbnail_key, content_type="image/jpeg")
+        article.thumbnail_image_url = thumbnail_url
+        db.commit()
+        db.refresh(article)
+        return {"success": True, "thumbnail_url": thumbnail_url}
+    except Exception as e:
+        db.rollback()
+        return {"success": False, "error": str(e)}
+    finally:
+        db.close()
 
-    image = download_image(image_url)
-
-    if not image:
-        result= "이미지 다운로드 실패"
-        return result
-    
-    thumbnail = create_thumbnail(image)
-    
-    timestamp = str(uuid.uuid4())[:8]
-    thumbnail_key = f"thumbnails/{timestamp}_thumb.jpg"
-    thumbnail_bytes = image_to_bytes(thumbnail)
-
-    return upload_to_s3(thumbnail_bytes,thumbnail_key,content_type="image/jpeg")
+def delete_article_by_id(article_id: str) -> bool:
+    db = next(get_db())
+    try:
+        article = db.query(NewsArticle).filter(NewsArticle.id == article_id).first()
+        if not article:
+            return False
+        db.delete(article)
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"기사 삭제 실패: {e}")
+        return False
+    finally:
+        db.close()
