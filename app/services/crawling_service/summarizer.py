@@ -24,7 +24,7 @@ async def summarize_article_with_gpt_async(content: str) -> Optional[str]:
 2. 객관적이고 사실 중심으로 작성
 3. 한국어로 작성
 4. 불필요한 수식어나 반복 제거
-5. ~했습니다 형식으로 말하기
+5. 반말 형식이 아닌 ~했습니다 형식으로 말하기
 """
         response = await client.chat.completions.create(
             model="gpt-3.5-turbo",

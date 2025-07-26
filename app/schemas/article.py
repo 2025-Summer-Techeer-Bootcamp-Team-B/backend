@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class ArticleDetailResponse(BaseModel):
-    id: UUID
+    id: str
     title: str
     url: str
     summary_text: Optional[str] = None
@@ -21,7 +21,7 @@ class ArticleDetailResponse(BaseModel):
         from_attributes = True
 
 class ArticleRecentResponse(BaseModel):
-    id:UUID
+    id:str
     title:str
     thumbnail_image_url:Optional[str]=None
     category_name:Optional[str]=None
