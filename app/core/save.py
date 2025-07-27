@@ -9,7 +9,7 @@ from dateutil import parser
 from app.models.news_article import NewsArticle
 from app.models.press import Press
 from app.models.category import Category
-from app.celery_app import process_image_to_s3_async_task, generate_tts_audio_async_task
+from app.celery_app import process_image_to_gcs_async_task, generate_tts_audio_async_task
 
 logger = logging.getLogger(__name__)
 KST = datetime.timezone(datetime.timedelta(hours=9))
@@ -111,18 +111,18 @@ def save_article_to_db(db: Session, article_data: Dict) -> Optional[NewsArticle]
         db.add(news_article)
         db.commit()
         db.refresh(news_article)
-        # # TTS 생성 Celery 태스크
-        # try:
-        #     tts_task = generate_tts_audio_async_task(str(news_article.id))
-        #     logger.info(f"TTS Celery 태스크 시작: {tts_task['task_id']}")
-        # except Exception as e:
-        #     logger.error(f"TTS Celery 태스크 시작 실패: {e}")
-        # # 썸네일 이미지 생성 Celery 태스크
-        # try:
-        #     image_task = process_image_to_s3_async_task(str(news_article.id))
-        #     logger.info(f"이미지 썸네일 생성 태스크 시작: {image_task['task_id']}")
-        # except Exception as e:
-        #     logger.error(f"이미지 썸네일 태스크 시작 실패: {e}")
+        # TTS 생성 Celery 태스크
+        try:
+            tts_task = generate_tts_audio_async_task(str(news_article.id))
+            logger.info(f"TTS Celery 태스크 시작: {tts_task['task_id']}")
+        except Exception as e:
+            logger.error(f"TTS Celery 태스크 시작 실패: {e}")
+        # 썸네일 이미지 생성 Celery 태스크
+        try:
+            image_task = process_image_to_gcs_async_task(str(news_article.id))
+            logger.info(f"이미지 썸네일 생성 태스크 시작: {image_task['task_id']}")
+        except Exception as e:
+            logger.error(f"이미지 썸네일 태스크 시작 실패: {e}")
         logger.info(f"기사 저장 완료: {news_article.title[:50]}...")
         return news_article
     except Exception as e:

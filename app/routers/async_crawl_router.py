@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import Optional
 import time
 from datetime import datetime
-from app.services.crawling_service.async_crawler import scrape_all_articles_async
+from app.services.crawling.main_crawler import scrape_all_articles_async
 from app.schemas.news_crawl import NewsCrawlResponse, NewsCrawledArticle
 from app.core.database import SessionLocal
 

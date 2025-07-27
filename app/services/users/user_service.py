@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.utils.password_hash_utils import hash_password, verify_password
+from app.services.auth.password_utils import hash_password, verify_password
 import datetime
 
 def create_user(db: Session, request_user_email: str, request_user_password: str):
@@ -9,14 +9,12 @@ def create_user(db: Session, request_user_email: str, request_user_password: str
         email=request_user_email,
         password=hashed_password,
         voice_type="None",
-        alarm_token="None",
         refresh_token="None",
         created_at=datetime.datetime.utcnow(),
         is_deleted=False,
     )
     db.add(new_user)
     db.commit()
-
     return new_user
 
 def get_user_by_email(db: Session, request_user_email: str): # 이메일로 유저 조회
@@ -26,7 +24,6 @@ def login_process(db: Session, request_user_email: str, request_user_password: s
     user = db.query(User).filter(User.email == request_user_email).first()
     if user is None:
         return False
-    
     if verify_password(request_user_password, user.password):
         return user
     else:

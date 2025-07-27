@@ -1,6 +1,6 @@
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.services.crawling_service.async_crawler import scrape_all_articles_async
+from app.services.crawling.main_crawler import scrape_all_articles_async
 
 
 def start_scheduler(app):

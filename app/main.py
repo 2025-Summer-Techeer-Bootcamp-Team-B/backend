@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends
 from app.middleware.auth_middleware import AuthMiddleware
 from app.routers import router
-from app.routers.tts import router as tts_router
 from app.utils.scheduler import start_scheduler
 from .core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -17,16 +16,12 @@ load_dotenv()
 app=FastAPI()  
 
 app.include_router(router)
-app.include_router(tts_router)
 # Create tables
 Base.metadata.create_all(bind=engine)
-origins = [
-    #추가해서 사용
-]   
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

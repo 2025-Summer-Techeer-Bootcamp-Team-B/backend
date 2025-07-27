@@ -1,118 +1,192 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.services.user import create_user, get_user_by_email, login_process
+from app.schemas.user_setting import UserSetting, UserHistory
+from app.models.user_category import UserCategory
+from app.models.category import Category
+from app.models.press import Press
+from app.models.user_preferred_press import UserPreferredPress
+from app.models.user_keyword import UserKeyword
 from app.models.user import User
-from app.utils.jwt_utils import create_access_token, create_refresh_token, verify_token
-from app.schemas.user import (
-    UserBase, RegisterResponse, LoginResponse, RefreshRequest, EmailExistsResponse
-)
-from datetime import datetime
+from app.services.users import get_user_history, UserPreferencesCache
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/user", tags=["user"])
 
-@router.post("/register", response_model=RegisterResponse)
-def register_user(user_data: UserBase, db: Session = Depends(get_db)):
-    # 입력 검증
-    if not user_data.email or user_data.email.strip() == "":
-        raise HTTPException(status_code=400, detail="이메일은 비어있을 수 없습니다.")
-    
-    if not user_data.password or user_data.password.strip() == "":
-        raise HTTPException(status_code=400, detail="비밀번호는 비어있을 수 없습니다.")
-    
-    if len(user_data.password) < 6:
-        raise HTTPException(status_code=400, detail="비밀번호는 최소 6자 이상이어야 합니다.")
-    
-    # 이메일 형식 검증
-    if "@" not in user_data.email or "." not in user_data.email:
-        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
-    
-    request_user = get_user_by_email(db, user_data.email)
-
-    if request_user is None:
-        user = create_user(db, user_data.email, user_data.password)
-        
-        access_token = create_access_token(user.id)
-        refresh_token = create_refresh_token(user.id)
-        
-        user.refresh_token = refresh_token
-        db.commit()
-        
-        return RegisterResponse(
-            message="회원가입이 완료되었습니다.", 
-            email=user_data.email,
-            access_token=access_token,
-            refresh_token=refresh_token
-        )
-    else:
-        raise HTTPException(status_code=409, detail="이미 존재하는 이메일입니다.")
-    
-@router.get("/exists", response_model=EmailExistsResponse)
-def check_email_exists(email: str, db: Session = Depends(get_db)):
-    user = get_user_by_email(db, email)
+def get_current_user(request: Request, db: Session) -> User:
+    """현재 인증된 사용자를 가져옵니다."""
+    user_id = request.state.user_id
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
-        raise HTTPException(status_code=404, detail="이메일이 존재하지 않습니다.")
-    else:
-        return EmailExistsResponse(exists=True, email=email)    
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
-@router.post("/login", response_model=LoginResponse)
-def login_user(user_data: UserBase, response: Response, db: Session = Depends(get_db)):
-    # 입력 검증
-    if not user_data.email or user_data.email.strip() == "":
-        raise HTTPException(status_code=400, detail="이메일은 비어있을 수 없습니다.")
-    
-    if not user_data.password or user_data.password.strip() == "":
-        raise HTTPException(status_code=400, detail="비밀번호는 비어있을 수 없습니다.")
-    
-    user = login_process(db, user_data.email, user_data.password)
-    if user is False:
-        raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다.")
-    
-    refresh_token = create_refresh_token(user.id)
-    access_token = create_access_token(user.id)
-    
-    user.refresh_token = refresh_token
+def clear_user_relations(db: Session, model, user_id: str):
+    """사용자의 특정 관계 데이터를 삭제합니다."""
+    db.query(model).filter(model.user_id == user_id).delete()
     db.commit()
 
-    return LoginResponse(
-        message="로그인이 완료되었습니다.",
-        access_token=access_token,
-        refresh_token=refresh_token
-    )
+def get_selected_names(db: Session, user, relation_attr: str, model, name_field: str, id_field: str):
+    """관계 테이블에서 선택된 이름들을 가져옵니다."""
+    ids = [getattr(rel, id_field) for rel in getattr(user, relation_attr)]
+    if not ids:
+        return []
+    objs = db.query(model).filter(getattr(model, 'id').in_(ids)).all()
+    return [getattr(obj, name_field) for obj in objs]
 
-@router.post("/refresh", response_model=RegisterResponse)
-async def refresh_token(token_data: RefreshRequest, response: Response, db: Session = Depends(get_db)):
-    # 입력 검증
-    if not token_data.refresh_token or token_data.refresh_token.strip() == "":
-        raise HTTPException(status_code=400, detail="리프레시 토큰은 비어있을 수 없습니다.")
+# ==================== GET 엔드포인트들 ====================
+
+@router.get("/press", response_model=UserSetting)
+def get_user_press(request: Request, db: Session = Depends(get_db)):
+    """사용자의 관심 언론사를 조회합니다."""
+    user = get_current_user(request, db)
+    press_names = UserPreferencesCache.get_user_press(user.id, db)
+    return UserSetting(press=press_names)
+
+@router.get("/category", response_model=UserSetting)
+def get_user_category(request: Request, db: Session = Depends(get_db)):
+    """사용자의 관심 카테고리를 조회합니다."""
+    user = get_current_user(request, db)
+    category_names = UserPreferencesCache.get_user_category(user.id, db)
+    return UserSetting(category=category_names)
+
+@router.get("/keyword", response_model=UserSetting)
+def get_user_keyword(request: Request, db: Session = Depends(get_db)):
+    """사용자의 관심 키워드를 조회합니다."""
+    user = get_current_user(request, db)
+    keyword_list = UserPreferencesCache.get_user_keyword(user.id, db)
+    return UserSetting(keyword=keyword_list)
+
+@router.get("/voice-type", response_model=UserSetting)
+def get_user_voice_type(request: Request, db: Session = Depends(get_db)):
+    """사용자의 음성 타입을 조회합니다."""
+    user = get_current_user(request, db)
+    voice_type = UserPreferencesCache.get_user_voice_type(user.id, db)
+    return UserSetting(voice_type=voice_type)
+
+@router.get("/history", response_model=UserHistory)
+def user_history(request: Request, db: Session = Depends(get_db)):
+    """사용자의 조회 기록을 가져옵니다."""
+    user = get_current_user(request, db)
+    histories = get_user_history(user.id, db)
     
-    payload = verify_token(token_data.refresh_token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="유효하지 않은 리프레시 토큰입니다.")
-    if payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="잘못된 토큰 타입입니다.")
-    user_id = payload.get("User_id")
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다.")
-   
-    new_access_token = create_access_token(user.id)
-
-    return RegisterResponse(
-        message="토큰이 성공적으로 갱신되었습니다",
-        email=user.email,
-        access_token=new_access_token,
-        refresh_token=token_data.refresh_token
-    )
-
-# 미들웨어 테스트용 엔드포인트
-@router.get("/test-middleware")
-async def test_middleware(request: Request):
-    """미들웨어가 제대로 작동하는지 테스트하는 엔드포인트"""
-    # request.state에서 미들웨어가 설정한 정보 확인
-    user_id = getattr(request.state, 'user_id', None)
+    user_history = []
+    for history in histories:
+        article = history.article
+        if not all([history.news_id, article.thumbnail_image_url, article.url]):
+            continue  # 필수 필드가 없는 경우 건너뛰기
+        
+        user_history.append({
+            "user_id": user.id,
+            "news_id": history.news_id,
+            "title": article.title,
+            "thumbnail_image_url": article.thumbnail_image_url,
+            "url": article.url,
+            "category": article.category.category_name,
+            "viewed_at": history.viewed_at
+        })
     
-    return {
-        "message": "미들웨어 테스트 성공!",
-        "user_id_from_middleware": user_id,
-    }
+    return UserHistory(histories=user_history)
+
+# ==================== PUT 엔드포인트들 ====================
+
+@router.put("/press", response_model=UserSetting)
+def user_press_setting(request: Request, user_setting: UserSetting, db: Session = Depends(get_db)):
+    """사용자의 관심 언론사를 설정합니다."""
+    user = get_current_user(request, db)
+    
+    if user_setting.press is None:
+        raise HTTPException(status_code=400, detail="Press is required")
+    
+    # 기존 관계 삭제
+    clear_user_relations(db, UserPreferredPress, user.id)
+    
+    # 새로운 관계 추가
+    for press_name in user_setting.press:
+        press = db.query(Press).filter(Press.press_name == press_name).first()
+        if press:
+            db.add(UserPreferredPress(user_id=user.id, press_id=press.id))
+    
+    db.commit()
+    db.refresh(user)
+    
+    # 캐시 삭제
+    UserPreferencesCache.clear_press_cache(user.id)
+    
+    # 설정된 언론사 이름들 반환
+    selected_press_names = get_selected_names(db, user, 'preferred_presses', Press, 'press_name', 'press_id')
+    return UserSetting(press=selected_press_names)
+
+@router.put("/category", response_model=UserSetting)
+def user_category_setting(request: Request, user_setting: UserSetting, db: Session = Depends(get_db)):
+    """사용자의 관심 카테고리를 설정합니다."""
+    user = get_current_user(request, db)
+    
+    if user_setting.category is None:
+        raise HTTPException(status_code=400, detail="Category is required")
+    
+    # 기존 관계 삭제
+    clear_user_relations(db, UserCategory, user.id)
+    
+    # 새로운 관계 추가
+    for category_name in user_setting.category:
+        category = db.query(Category).filter(Category.category_name == category_name).first()
+        if category:
+            db.add(UserCategory(user_id=user.id, category_id=category.id))
+    
+    db.commit()
+    db.refresh(user)
+    
+    # 캐시 삭제
+    UserPreferencesCache.clear_category_cache(user.id)
+    
+    # 설정된 카테고리 이름들 반환
+    selected_category_names = get_selected_names(db, user, 'user_categories', Category, 'category_name', 'category_id')
+    return UserSetting(category=selected_category_names)
+
+@router.put("/keyword", response_model=UserSetting)
+def user_keyword_setting(request: Request, user_setting: UserSetting, db: Session = Depends(get_db)):
+    """사용자의 관심 키워드를 설정합니다."""
+    user = get_current_user(request, db)
+    
+    if user_setting.keyword is None:
+        raise HTTPException(status_code=400, detail="Keyword is required")
+    
+    # 기존 관계 삭제
+    clear_user_relations(db, UserKeyword, user.id)
+    
+    # 새로운 관계 추가
+    for keyword in user_setting.keyword:
+        db.add(UserKeyword(user_id=user.id, keyword=keyword))
+    
+    db.commit()
+    db.refresh(user)
+    
+    # 캐시 삭제
+    UserPreferencesCache.clear_keyword_cache(user.id)
+    
+    # 설정된 키워드들 반환
+    selected_keywords = [kw.keyword for kw in user.keywords]
+    return UserSetting(keyword=selected_keywords)
+
+@router.put("/voice-type", response_model=UserSetting)
+def user_voice_type_setting(request: Request, voice_setting: UserSetting, db: Session = Depends(get_db)):
+    """사용자의 음성 타입을 설정합니다."""
+    user = get_current_user(request, db)
+    
+    if voice_setting.voice_type is None:
+        raise HTTPException(status_code=400, detail="Voice type is required")
+    
+    # voice_type 유효성 검사
+    if voice_setting.voice_type not in ["male", "female"]:
+        raise HTTPException(status_code=400, detail="Voice type must be 'male' or 'female'")
+    
+    # voice_type 업데이트
+    user.voice_type = voice_setting.voice_type
+    db.commit()
+    db.refresh(user)
+    
+    # 캐시 삭제
+    UserPreferencesCache.clear_voice_type_cache(user.id)
+    
+    return UserSetting(voice_type=user.voice_type)
+
