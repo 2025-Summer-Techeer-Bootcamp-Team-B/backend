@@ -18,7 +18,7 @@ async def fetch_rss_feed_async(session: aiohttp.ClientSession, rss_url: str) -> 
             # 일단 각 URL당 10개만 추출하고 추후 수정 필요
             urls = []
             for i, item in enumerate(root.findall('.//item/link')):
-                if i >= 20:
+                if i >= 3:
                     break
                 if item.text:
                     urls.append(item.text)

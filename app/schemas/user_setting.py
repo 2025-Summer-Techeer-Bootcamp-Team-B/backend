@@ -5,6 +5,7 @@ class UserSetting(BaseModel):
     press: Optional[List[str]] = None
     category: Optional[List[str]] = None
     keyword: Optional[List[str]] = None
+    voice_type: Optional[str] = None
 
 class UserHistoryItem(BaseModel):
     user_id: str

@@ -2,10 +2,10 @@ from celery import Celery
 from kombu import Queue
 import asyncio
 from typing import Dict
-from app.services.article_service.image_process import process_image_to_s3
-from app.services.tts_service.tts_generator import TTSGenerator
+from app.services.thumbnails.thumbnail_service import process_image_to_gcs
 from app.core.database import get_db
 from app.models.news_article import NewsArticle
+from app.services.tts.tts_service import TTSService
 
 # Celery 앱 생성
 celery_app = Celery(
@@ -22,7 +22,7 @@ celery_app.conf.task_queues = (
     Queue("default"),
 )
 
-def process_image_to_s3_async_task(article_id: str) -> Dict:
+def process_image_to_gcs_async_task(article_id: str) -> Dict:
     """이미지 처리 Celery 태스크를 비동기로 시작하고 태스크 ID 반환"""
     task = process_image_async.delay(article_id)
     return {
@@ -37,7 +37,7 @@ def process_image_async(article_id: str) -> Dict:
     비동기로 이미지를 처리하는 Celery 태스크
     """
     try:
-        result = process_image_to_s3(article_id)
+        result = process_image_to_gcs(article_id)
         return result
     except Exception as e:
         return {
@@ -75,22 +75,34 @@ def generate_tts_audio_async(article_id: str) -> Dict:
                 "error": "요약이 없습니다. 먼저 요약을 생성하세요.",
                 "article_id": article_id
             }
-        tts_generator = TTSGenerator()
+        
+        print(f"TTS 생성 시작: article_id={article_id}, summary_length={len(article.summary_text)}")
+        
+        tts_service = TTSService()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             audio_urls = loop.run_until_complete(
-                tts_generator.generate_male_female_audio(article.summary_text)
+                tts_service.generate_male_female_audio(article.summary_text)
             )
+            
+            print(f"TTS 생성 결과: {audio_urls}")
+            
             if not audio_urls.get("male_audio_url") or not audio_urls.get("female_audio_url"):
+                error_msg = f"TTS 생성 실패 - male_url: {audio_urls.get('male_audio_url')}, female_url: {audio_urls.get('female_audio_url')}"
+                print(error_msg)
                 return {
                     "success": False,
-                    "error": "TTS 생성 실패",
+                    "error": error_msg,
                     "article_id": article_id
                 }
+            
             article.male_audio_url = audio_urls["male_audio_url"]
             article.female_audio_url = audio_urls["female_audio_url"]
             db.commit()
+            
+            print(f"TTS 생성 성공: male_url={audio_urls['male_audio_url']}, female_url={audio_urls['female_audio_url']}")
+            
             return {
                 "success": True,
                 "article_id": article_id,
@@ -101,9 +113,11 @@ def generate_tts_audio_async(article_id: str) -> Dict:
             loop.close()
     except Exception as e:
         db.rollback()
+        error_msg = f"TTS 생성 중 예외 발생: {str(e)}"
+        print(error_msg)
         return {
             "success": False,
-            "error": str(e),
+            "error": error_msg,
             "article_id": article_id
         }
     finally:

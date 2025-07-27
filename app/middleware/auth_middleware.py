@@ -1,7 +1,7 @@
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.utils.jwt_utils import verify_token
+from app.services.auth.jwt_utils import verify_token
 
 class AuthMiddleware(BaseHTTPMiddleware):
     """JWT 토큰 인증을 위한 미들웨어"""

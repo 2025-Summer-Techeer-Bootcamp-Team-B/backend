@@ -2,10 +2,10 @@
 import asyncio
 import aiohttp
 from typing import Optional, Dict
-from app.services.crawling_service.async_article_hankyung import extract_hankyung_article_async
-from app.services.crawling_service.async_article_sbs import extract_sbs_article_async
-from app.services.crawling_service.async_article_mbn import extract_mbn_article_async
-from app.services.crawling_service.summarizer import summarize_article_with_gpt_async
+from app.services.crawling.hankyung_article_handler import extract_hankyung_article_async
+from app.services.crawling.sbs_article_handler import extract_sbs_article_async
+from app.services.crawling.mbn_article_handler import extract_mbn_article_async
+from app.services.chatgpt.summarizer import summarize_article_with_gpt_async
 from app.core.database import get_db
 from app.models.news_article import NewsArticle
 
