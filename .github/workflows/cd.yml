@@ -47,7 +47,7 @@ jobs:
           key: ${{ secrets.GCP_SSH_KEY }}
           script: |
             echo "🚀 Starting deployment..."
-            cd /home/ubuntu/app
+            cd /home/dongja0618/backend
             echo "📥 Pulling latest code..."
             git pull origin main || true
             echo "🐳 Pulling latest Docker image..."
