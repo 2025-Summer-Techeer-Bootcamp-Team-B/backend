@@ -136,19 +136,6 @@ services:
     networks:
       - monitoring
 
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./nginx/certbot:/etc/letsencrypt
-      - ./nginx/www:/var/www/certbot
-    entrypoint: >
-      sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot
-      --email dongan0618@naver.com --agree-tos --no-eff-email
-      -d yosm-n.kro.kr"
-
-    networks:
-      - monitoring
   opensearch:
     image: opensearchproject/opensearch:2.11.1
     container_name: opensearch
