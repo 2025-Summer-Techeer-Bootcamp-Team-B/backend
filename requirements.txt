@@ -59,3 +59,5 @@ google-cloud-texttospeech==2.16.2
 langchain==0.2.16
 langchain-openai==0.1.25
 langchain-community==0.2.16
+prometheus-fastapi-instrumentator==7.0.2
+prometheus-client==0.21.1
