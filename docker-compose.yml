@@ -7,7 +7,7 @@ services:
     container_name: fastapi
     ports:
       - "8000:8000"
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload # 로컬 환경에서만 --reload를 사용하도록 함
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --workers 8 # 로컬 환경에서만 --reload를 사용하도록 함
     volumes:
       - .:/app
     env_file:

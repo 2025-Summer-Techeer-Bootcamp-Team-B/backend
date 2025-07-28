@@ -6,17 +6,17 @@ from uuid import UUID
 from app.core.database import get_db
 from app.schemas.article import ArticleDetailResponse, ArticleRecentResponse, ArticleDeleteResponse
 from app.schemas.article_recommend import ArticleRecommendResponse
-from app.services.article_service.query import get_article_by_id, get_article_recent, get_articles_by_category_and_user_press, delete_article, mark_article_as_viewed
+from app.core.query import get_article_by_id, get_article_recent, get_articles_by_category_and_user_press, delete_article, mark_article_as_viewed
 import redis
 import json
-
-from app.services.recommend_service import create_news_index, index_user_preferred_articles, recommend_articles_for_user_async
+from app.services.recommend.article_recommender import index_user_preferred_articles, recommend_articles_for_user_async
+from app.services.recommend.opensearch import create_news_index
 
 router = APIRouter(prefix="/articles",tags=["Articles"])
 
 redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
-#실시간 뉴스 가져오기 (20개)
+#실시간 뉴스 가져오기 (20개)ㄴ
 @router.get("/recent", response_model=List[ArticleRecentResponse])
 def read_recent_articles(limit: int = 20, db: Session = Depends(get_db)):
     cache_key = f"recent_articles:{limit}"
