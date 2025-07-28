@@ -136,6 +136,8 @@ services:
       - ./nginx/www:/var/www/certbot      # 인증 확인용 웹 루트
     depends_on:
       - fastapi
+    networks:
+      - monitoring
 
   certbot:
     image: certbot/certbot
