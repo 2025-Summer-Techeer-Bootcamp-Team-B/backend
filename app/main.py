@@ -14,7 +14,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app=FastAPI()  
+app=FastAPI() 
+
+origins = [
+    "http://localhost:52027",  # Flutter Web에서 뜨는 주소
+    "http://localhost:4200",   # 또는 개발 환경에서 사용하는 포트들
+    "http://127.0.0.1:52027",
+    "https://yosm-n.kro.kr",   # 실제 배포 도메인도 추가
+]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 instrumentator = Instrumentator().instrument(app)
 instrumentator.expose(app, include_in_schema=False) # 메트릭 정보 확인
@@ -23,13 +39,6 @@ app.include_router(router)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)

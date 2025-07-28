@@ -28,6 +28,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         
         is_public_path = request.url.path in self.public_paths
         is_refresh_only_path = request.url.path in self.refresh_only_paths
+
+        # ✅ Preflight 요청은 인증 없이 통과시킴
+        if request.method == "OPTIONS":
+            return await call_next(request)
         
         if is_public_path:
             # 공개 경로는 인증 없이 통과
