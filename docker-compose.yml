@@ -119,10 +119,24 @@ services:
     container_name: nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certbot:/etc/letsencrypt  # 인증서 저장 위치
+      - ./nginx/www:/var/www/certbot      # 인증 확인용 웹 루트
     depends_on:
       - fastapi
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./nginx/certbot:/etc/letsencrypt
+      - ./nginx/www:/var/www/certbot
+    entrypoint: >
+      sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot
+      --email dongan0618@naver.com --agree-tos --no-eff-email
+      -d yosm-n.kro.kr"
   opensearch:
     image: opensearchproject/opensearch:2.11.1
     container_name: opensearch
