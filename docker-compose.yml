@@ -179,6 +179,8 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
     networks:
@@ -206,3 +208,4 @@ networks:
 
 volumes:
   postgres_data:
+  grafana_data:
