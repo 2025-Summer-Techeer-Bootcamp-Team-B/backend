@@ -8,12 +8,16 @@ from app.core.database import Base
 from app.models.news_article import NewsArticle
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app=FastAPI()  
+
+instrumentator = Instrumentator().instrument(app)
+instrumentator.expose(app, include_in_schema=False) # 메트릭 정보 확인
 
 app.include_router(router)
 # Create tables
