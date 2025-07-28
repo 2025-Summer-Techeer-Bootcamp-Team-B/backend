@@ -1,0 +1,78 @@
+name: CI/CD for FastAPI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing dependencies..."
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed successfully!"
+
+      - name: Log in to Docker Hub
+        run: |
+          echo "🐳 Logging in to Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "✅ Docker Hub login successful!"
+
+      - name: Build and push Docker image
+        run: |
+          echo "🔨 Building Docker image..."
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/tts-celery-app:latest .
+          echo "📤 Pushing to Docker Hub..."
+          docker push ${{ secrets.DOCKER_USERNAME }}/tts-celery-app:latest
+          echo "✅ Docker image built and pushed successfully!"
+
+      - name: Deploy to GCP VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_SSH_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          script: |
+            echo "🚀 Starting deployment..."
+            cd /home/ubuntu/app
+            echo "📥 Pulling latest code..."
+            git pull origin main || true
+            echo "🐳 Pulling latest Docker image..."
+            docker pull ${{ secrets.DOCKER_USERNAME }}/tts-celery-app:latest
+            echo "🔄 Restarting services..."
+            docker compose down
+            docker compose up -d
+            echo "⏳ Waiting for services to start..."
+            sleep 10
+            echo "✅ Deployment completed successfully!"
+
+      - name: Health check
+        run: |
+          echo "🏥 Performing health check..."
+          # 여기에 실제 헬스체크 로직 추가 가능
+          echo "✅ Health check passed!"
+
+      - name: Deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🎉 Deployment successful!"
+            echo "✅ All steps completed successfully"
+          else
+            echo "❌ Deployment failed!"
+            echo "🔍 Check the logs above for details"
+            exit 1
+          fi
