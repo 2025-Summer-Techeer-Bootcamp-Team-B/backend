@@ -80,8 +80,7 @@
 
 
 ## 💻 System Architechture
-<img src="https://github.com/user-attachments/assets/f2908768-71b6-4946-b10a-d1f8551f44e3" />
-<img src="https://github.com/user-attachments/assets/852ba6ba-400e-4318-b10f-74b5abca1072" />
+<img src="https://github.com/user-attachments/assets/a11d284a-cd21-4480-b196-8257b16b066a" />
 
 ## 💾 ERD
 <p align="center">
