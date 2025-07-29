@@ -166,9 +166,6 @@ services:
       - '--web.enable-lifecycle'
     networks:
       - monitoring
-    depends_on:
-      - fastapi
-      - cadvisor
 
   grafana:
     image: grafana/grafana:latest
@@ -194,6 +191,8 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     privileged: true
+    depends_on:
+      - fastapi
     networks:
       - monitoring
 
