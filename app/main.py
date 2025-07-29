@@ -20,6 +20,8 @@ origins = [
     "http://localhost:52027",  # Flutter Web에서 뜨는 주소
     "http://localhost:4200",   # 또는 개발 환경에서 사용하는 포트들
     "http://127.0.0.1:52027",
+    "http://127.0.0.1:4201",
+    "http://127.0.0.1:4202",
     "https://yosm-n.kro.kr",   # 실제 배포 도메인도 추가
 ]
 
@@ -64,11 +66,12 @@ def read_articles(db: Session = Depends(get_db)):
 
 # 서버 시작 시 전체 기사 크롤링 한번 실행
 # 이후 매 15분마다 자동 크롤링
-# @app.on_event("startup")
-# def startup_event():
-#     start_scheduler(app)
-#     # 서버 시작 시 즉시 한 번 실행은 제거됨
-#     # import asyncio
-#     # loop = asyncio.get_event_loop()
-#     # loop.create_task(scrape_all_articles_async(max_concurrent=10, save_to_db=True))
+
+@app.on_event("startup")
+def startup_event():
+    start_scheduler(app)
+    # 서버 시작 시 즉시 한 번 실행은 제거됨
+    # import asyncio
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(scrape_all_articles_async(max_concurrent=10, save_to_db=True))
 
