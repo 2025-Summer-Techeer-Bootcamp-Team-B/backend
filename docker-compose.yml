@@ -154,12 +154,12 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus  # 영구 저장소 추가
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'  # 저장 경로 지정
-      - '--storage.tsdb.retention.time=24h'  # 24시간 보관
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=24h'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.no-lockfile'
@@ -193,12 +193,9 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
-      - cadvisor_data:/var/lib/cadvisor  # 영구 저장소 추가
     privileged: true
     networks:
       - monitoring
-    depends_on:
-      - fastapi
 
 networks:
   monitoring:
@@ -208,4 +205,3 @@ volumes:
   postgres_data:
   grafana_data:
   prometheus_data:
-  cadvisor_data:
