@@ -20,6 +20,8 @@ origins = [
     "http://localhost:52027",  # Flutter Web에서 뜨는 주소
     "http://localhost:4200",   # 또는 개발 환경에서 사용하는 포트들
     "http://127.0.0.1:52027",
+    "http://127.0.0.1:4201",
+    "http://127.0.0.1:4202",
     "https://yosm-n.kro.kr",   # 실제 배포 도메인도 추가
 ]
 
@@ -71,4 +73,3 @@ def startup_event():
     # import asyncio
     # loop = asyncio.get_event_loop()
     # loop.create_task(scrape_all_articles_async(max_concurrent=10, save_to_db=True))
-
