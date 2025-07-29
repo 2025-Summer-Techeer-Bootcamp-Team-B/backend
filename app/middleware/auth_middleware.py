@@ -16,7 +16,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/health",
             "/api/v1/auth/login",
-            "/api/v1/auth/register"
+            "/api/v1/auth/register",
+            "/api/v1/articles/recent",
+            "/api/v1/articles/preferred-category",
+            "/api/v1/articles/recommend",
+            "/api/v1/articles/{article_id}",
         ]
         
         # refresh 토큰만 접근 가능한 경로들
@@ -26,7 +30,19 @@ class AuthMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next):
         
+        # 동적 경로 처리
         is_public_path = request.url.path in self.public_paths
+        if not is_public_path:
+            # 동적 경로 패턴 매칭
+            for pattern in self.public_paths:
+                if '{' in pattern:  # 동적 경로 패턴
+                    # 패턴을 정규식으로 변환
+                    import re
+                    regex_pattern = pattern.replace('{', '(?P<').replace('}', '>[^/]+)')
+                    if re.match(regex_pattern, request.url.path):
+                        is_public_path = True
+                        break
+        
         is_refresh_only_path = request.url.path in self.refresh_only_paths
 
         # ✅ Preflight 요청은 인증 없이 통과시킴

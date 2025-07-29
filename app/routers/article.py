@@ -83,16 +83,37 @@ async def recommend_articles(request: Request, db: Session = Depends(get_db)):
 #뉴스 상세 조회 하기
 @router.get("/{article_id}", response_model=ArticleDetailResponse)
 def get_article_detail(request: Request,article_id: UUID, db: Session = Depends(get_db)):
-    user_id = request.state.user_id
+    # user_id를 안전하게 가져오기
+    user_id = getattr(request.state, 'user_id', None)
 
     article = get_article_by_id(db, article_id)
     if not article:
         raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
-    # 읽음 기록 저장
-    read_status = mark_article_as_viewed(db, user_id, article_id)
-    if not read_status:
-        raise HTTPException(status_code=400, detail="읽음 기록 저장 실패")
-    return article
+    # 읽음 기록 저장 (user_id가 None이면 건너뛰기)
+    if user_id:
+        read_status = mark_article_as_viewed(db, user_id, article_id)
+        if not read_status:
+            raise HTTPException(status_code=400, detail="읽음 기록 저장 실패")
+    # 수동으로 필요한 필드들을 딕셔너리에 추가
+    article_dict = {
+        "id": str(article.id),
+        "title": article.title,
+        "url": article.url,
+        "published_at": article.published_at,
+        "summary_text": article.summary_text,
+        "male_audio_url": article.male_audio_url,
+        "female_audio_url": article.female_audio_url,
+        "original_image_url": article.original_image_url,
+        "thumbnail_image_url": article.thumbnail_image_url,
+        "author": article.author,
+        "category_name": article.category_name,
+        "created_at": article.created_at,
+        "updated_at": article.updated_at,
+        "is_deleted": article.is_deleted,
+        "press_id": str(article.press_id),
+        "category_id": str(article.category_id)
+    }
+    return article_dict
 
 #기사 삭제하기
 @router.delete("/{article_id}", response_model=ArticleDeleteResponse)
