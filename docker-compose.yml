@@ -129,12 +129,26 @@ services:
     container_name: nginx
     ports:
       - "80:80"
+      - "443:443"  # HTTPS 포트
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt                    # SSL 인증서 저장 경로
+      - ./certbot/www:/var/www/certbot                     # SSL 인증서 발급용 웹루트 경로
     depends_on:
       - fastapi
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
     networks:
       - monitoring
+  
+  certbot:
+    image: certbot/certbot    # Let's Encrypt의 공식 Certbot 이미지
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt    # SSL 인증서와 설정 저장
+      - ./certbot/www:/var/www/certbot     # 도메인 소유권 확인용 웹루트
+    # 12시간마다 SSL 인증서 갱신 시도 (실제 갱신은 만료 30일 전에만 수행)
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
 
   opensearch:
     image: opensearchproject/opensearch:2.11.1
