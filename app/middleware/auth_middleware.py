@@ -16,7 +16,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/health",
             "/api/v1/auth/login",
-            "/api/v1/auth/register"
+            "/api/v1/auth/register",
+            "/metrics"
         ]
         
         # refresh 토큰만 접근 가능한 경로들

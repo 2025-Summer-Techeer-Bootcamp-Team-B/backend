@@ -32,19 +32,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-instrumentator = Instrumentator().instrument(app)
-instrumentator.expose(app, include_in_schema=False) # 메트릭 정보 확인
-
 app.include_router(router)
-# Create tables
-Base.metadata.create_all(bind=engine)
-
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 #인증 미들웨어 추가
 app.add_middleware(AuthMiddleware)
+
+instrumentator = Instrumentator().instrument(app)
+instrumentator.expose(app, include_in_schema=False) # 메트릭 정보 확인
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()
@@ -64,11 +64,11 @@ def read_articles(db: Session = Depends(get_db)):
 
 # 서버 시작 시 전체 기사 크롤링 한번 실행
 # 이후 매 15분마다 자동 크롤링
-@app.on_event("startup")
-def startup_event():
-    start_scheduler(app)
-    # 서버 시작 시 즉시 한 번 실행은 제거됨
-    # import asyncio
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(scrape_all_articles_async(max_concurrent=10, save_to_db=True))
+# @app.on_event("startup")
+# def startup_event():
+#     start_scheduler(app)
+#     # 서버 시작 시 즉시 한 번 실행은 제거됨
+#     # import asyncio
+#     # loop = asyncio.get_event_loop()
+#     # loop.create_task(scrape_all_articles_async(max_concurrent=10, save_to_db=True))
 
