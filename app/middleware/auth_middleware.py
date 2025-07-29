@@ -17,10 +17,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/health",
             "/api/v1/auth/login",
             "/api/v1/auth/register",
-            "/api/v1/articles/recent",
-            "/api/v1/articles/preferred-category",
-            "/api/v1/articles/recommend",
-            "/api/v1/articles/{article_id}",
         ]
         
         # refresh 토큰만 접근 가능한 경로들
