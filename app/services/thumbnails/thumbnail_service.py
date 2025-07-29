@@ -68,14 +68,11 @@ def apply_fallback_image_direct(article_id: str) -> Dict:
         if not article:
             return {"success": False, "error": "해당 article_id의 뉴스 기사가 존재하지 않습니다."}
         
-        # 기사 제목에 따라 fallback 이미지 선택
-        article_title = article.title or ""
-        fallback_type = 'news' if article_title else 'default'
-        
         # GCS fallback 이미지 URL 생성
         from app.services.thumbnails.gcs_uploader import GCS_BUCKET
+
         bucket_name = GCS_BUCKET or 'your-bucket-name'
-        fallback_path = f"fallback/{fallback_type}_thumbnail.jpg"
+        fallback_path = f"fallback/fallback_image.jpg"
         fallback_url = f"https://storage.googleapis.com/{bucket_name}/{fallback_path}"
         
         # DB에 fallback URL 저장
@@ -86,8 +83,7 @@ def apply_fallback_image_direct(article_id: str) -> Dict:
         return {
             "success": True,
             "thumbnail_url": fallback_url,
-            "method_used": "fallback",
-            "fallback_type": fallback_type
+            "method_used": "fallback"
         }
         
     except Exception as e:
