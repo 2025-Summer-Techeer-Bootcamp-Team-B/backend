@@ -3,7 +3,7 @@
 <h1 align="center"> 요즘N </h1>
 <div align="center"> 
 <h3><b>📚 실시간 뉴스, AI 요약, 관심 키워드까지 한 번에 </b></h3><br>
-<img width="1503" src="">
+<img width="1503" src="https://github.com/user-attachments/assets/82652d6f-2deb-4109-aeb3-c55dd14246c4">
 
 <br>
 
@@ -35,7 +35,7 @@
 <br>
 
 # 📣 Medium
-> 🔎 [요즘N Medium](htts://) &nbsp;
+> 🔎 [요즘N Medium](https://medium.com/@dongan0618/%EC%8B%A4%EC%8B%9C%EA%B0%84-%EB%89%B4%EC%8A%A4-ai-%EC%9A%94%EC%95%BD-%EA%B4%80%EC%8B%AC-%ED%82%A4%EC%9B%8C%EB%93%9C%EA%B9%8C%EC%A7%80-%ED%95%9C-%EB%B2%88%EC%97%90-%EC%9A%94%EC%A6%98n-2025-siliconvalley-summer-bootcamp-6d221755fa81) &nbsp;
 <br>
 
 # 🎥 Demo
@@ -66,13 +66,18 @@
 <img src=""/>
 <br>
 
+### 키워드 페이지 (Keyword Page)
+>사용자가 설정한 관심 언론사와 카테고리를 기반으로 등록한 관심 키워드와 가장 관련성 높은 뉴스 기사들을 비교·분석해 큐레이션하여 키워드 간 유사도 분석을 통해 맞춤형 기사를 제공합니다.
+<img src=""/>
+<br>
+
 ### 히스토리 페이지 (History Page)
 >사용자가 이전에 읽었던 기사들을 한눈에 확인할 수 있어, 뉴스 소비 이력을 쉽게 돌아볼 수 있습니다.
 
 <img src=""/>
 <br>
 
-### 즐겨찾기 페이지 (Favorites Page)
+### 즐겨찾기 페이지 (Bookmark  Page)
 >관심 있는 기사를 즐겨찾기에 추가해두면, 언제든지 다시 찾아보고 읽을 수 있습니다.
 
 <img src=""/>
@@ -145,6 +150,98 @@
 ## 🚀 How to Start
 #### 1. Clone The Repository
 
-## 👥 Member
-| Name | 김동안 | 정철웅 | 최민호 | 김하은 | 김주호 |
-|:---:|:---:|:---:|:---:|:---:|
+## 🧑‍🤝‍🧑Member
+<table width="1000">
+    <thead>
+    </thead>
+    <tbody>
+    <tr>
+        <th>Pictures</th>
+         <td width="100" align="center">
+            <a href="https://github.com/docodocod">
+                <img src="https://github.com/user-attachments/assets/74a571ec-73b1-4a06-9362-a88e1623f50a" width="100" height="100">
+            </a>
+        </td>
+        <td width="100" align="center">
+             <a href="https://github.com/inu-ung">
+                <img src="https://github.com/user-attachments/assets/a31b02fa-7b47-468d-a852-cabb1fa1ae2b" width="100" height="100">
+            </a>
+        </td>
+        <td width="100" align="center">
+             <a href="https://github.com/Minho2003">
+                <img src="https://github.com/user-attachments/assets/9ab2bf6f-39c1-4e1f-873a-6546f2205af4" width="100" height="100">
+            </a>
+        </td>
+        <td width="100" align="center">
+             <a href="https://github.com/haeunmochi">
+                <img src="https://github.com/user-attachments/assets/67c1049c-82e2-44d2-beee-bde12c0e7c0b" width="100" height="100">
+            </a>
+        </td>
+        <td width="100" align="center">
+             <a href="https://github.com/kai8582">
+                <img src="" width="100" height="100">
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <th>Name</th>
+        <td width="100" align="center">김동안</td>
+        <td width="100" align="center">정철웅</td>
+        <td width="100" align="center">최민호</td>
+        <td width="100" align="center">김하은</td>
+        <td width="100" align="center">김주호</td>
+    </tr>
+    <tr>
+        <th>Position</th>
+        <td width="150" align="center">
+            Leader<br>
+            Backend<br>
+            DevOps<br>
+        </td>
+        <td width="150" align="center">
+            Fullstack<br>
+            DevOps<br>
+        </td>
+        <td width="150" align="center">
+            Fullstack<br>
+            DevOps<br>
+        </td>
+        <td width="150" align="center">
+            Frontend<br>
+            Design<br>
+        </td>
+        <td width="150" align="center">
+            Frontend<br>
+            Design<br>
+        </td>
+    </tr>
+    <tr>
+        <th>GitHub</th>
+        <td width="100" align="center">
+            <a href="https://github.com/docodocod">
+                <img src="https://img.shields.io/badge/GitHub-docodocod-black?style=for-the-badge&logo=github"/>
+            </a>
+        </td>
+        <td width="100" align="center">
+            <a href="https://github.com/inu-ung">
+                <img src="https://img.shields.io/badge/GitHub-inu--ung-black?style=for-the-badge&logo=github"/>
+            </a>
+        </td>
+        <td width="100" align="center">
+            <a href="https://github.com/Minho2003">
+                <img src="https://img.shields.io/badge/GitHub-Minho2003-black?style=for-the-badge&logo=github"/>
+            </a>
+        </td>
+        <td width="100" align="center">
+            <a href="https://github.com/ehdgusdl">
+                <img src="https://img.shields.io/badge/GitHub-ehdgusdl-black?style=for-the-badge&logo=github"/>
+            </a>
+        </td>
+        <td width="100" align="center">
+            <a href="https://github.com/kai8582">
+                <img src="https://img.shields.io/badge/GitHub-kai8582-black?style=for-the-badge&logo=github"/>
+            </a>
+        </td>
+    </tr>
+    </tbody>
+</table>
