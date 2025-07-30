@@ -20,6 +20,8 @@ services:
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    networks:
+      - monitoring
 
   # celery:
   #   build: .
@@ -36,6 +38,8 @@ services:
   #   environment:
   #     - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
   #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   networks:
+  #   - monitoring
 
   celery-worker-tts:
     build: .
@@ -50,7 +54,8 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0  
     volumes:
       - .:/app
-
+    networks:
+      - monitoring
   celery-worker-image:
     build: .
     container_name: celery-worker-image
@@ -64,7 +69,8 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - .:/app
-
+    networks:
+      - monitoring
   flower:
     build: .
     container_name: flower
@@ -81,7 +87,8 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - .:/app
-
+    networks:
+      - monitoring
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -94,13 +101,15 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=guest # 유저
       - RABBITMQ_DEFAULT_PASS=guest # 비번
-
+    networks:
+      - monitoring
   redis:
     image: redis:latest
     container_name: redis
     ports:
       - "6379:6379"
-
+    networks:
+      - monitoring
   db:
     image: postgres:15
     container_name: postgres
@@ -113,16 +122,34 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+    networks:
+      - monitoring
   nginx:
     image: nginx:latest
     container_name: nginx
     ports:
       - "80:80"
+      - "443:443"  # HTTPS 포트
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt                    # SSL 인증서 저장 경로
+      - ./certbot/www:/var/www/certbot                     # SSL 인증서 발급용 웹루트 경로
     depends_on:
       - fastapi
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+    networks:
+      - monitoring
+  
+  certbot:
+    image: certbot/certbot    # Let's Encrypt의 공식 Certbot 이미지
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt    # SSL 인증서와 설정 저장
+      - ./certbot/www:/var/www/certbot     # 도메인 소유권 확인용 웹루트
+    # 12시간마다 SSL 인증서 갱신 시도 (실제 갱신은 만료 30일 전에만 수행)
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+
   opensearch:
     image: opensearchproject/opensearch:2.11.1
     container_name: opensearch
@@ -132,7 +159,62 @@ services:
     ports:
       - 9200:9200
       - 9600:9600
+    networks:
+      - monitoring
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=24h'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.no-lockfile'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    depends_on:
+      - fastapi
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
 
 volumes:
   postgres_data:
+  grafana_data:
+  prometheus_data:

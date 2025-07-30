@@ -10,13 +10,13 @@ class NewsArticle(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False)
-    url = Column(String(225), nullable=False)
+    url = Column(String(500), nullable=False)
     published_at = Column(DateTime(timezone=True), nullable=False)
     summary_text = Column(String(500), nullable=False)
     male_audio_url = Column(String(500), nullable=False)
     female_audio_url = Column(String(500), nullable=False)
-    original_image_url = Column(String(200))
-    thumbnail_image_url = Column(String(200))
+    original_image_url = Column(String(300))
+    thumbnail_image_url = Column(String(300))
     author = Column(String(20), nullable=False)
     category_name = Column(String(30), nullable=False)
 

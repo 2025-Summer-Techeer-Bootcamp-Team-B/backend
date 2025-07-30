@@ -15,8 +15,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/redoc", 
             "/openapi.json",
             "/health",
-            "/api/v1/auth/login",
+            "/metrics",
             "/api/v1/auth/register",
+            "/api/v1/auth/exists",
+            "/api/v1/auth/login",
+
         ]
         
         # refresh 토큰만 접근 가능한 경로들
@@ -40,6 +43,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
                         break
         
         is_refresh_only_path = request.url.path in self.refresh_only_paths
+
+        # ✅ Preflight 요청은 인증 없이 통과시킴
+        if request.method == "OPTIONS":
+            return await call_next(request)
         
         if is_public_path:
             # 공개 경로는 인증 없이 통과
