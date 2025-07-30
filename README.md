@@ -122,23 +122,18 @@
 <h3 align="left">Prometheus & Grafana</h3>
 <table>
     <tr>
-        <th colspan="2">fastapi</th>
+        <th colspan="2">FastAPI&cAdvisor</th>
     </tr>
     <tr>
-        <td><img src="" alt="Django"></td>
-        <td><img src="" alt="Django2"></td>
+        <td><img src="https://github.com/user-attachments/assets/e3b71dc9-e07d-4ef1-8402-7148b8fae083" alt="Django"></td>
+        <td><img src="https://github.com/user-attachments/assets/eeac7bab-b74f-40eb-b505-d684c842333a" alt="Django2"></td>
     </tr>
     <tr>
     <tr>
-        <th colspan="2">cAdvisor</th>
+        <th colspan="2">celery tasks</th>
     </tr>
     <tr>
-        <td><img src="" alt="cAdvisor2"></td>
-    </tr>
-    <tr>
-        <th colspan="2"></th>
-    </tr>
-    <tr>
+        <td colspan="2"><img src="https://github.com/user-attachments/assets/920c2e85-7caa-4749-8dc8-b7d557e82e01" alt="cAdvisor2"></td>
     </tr>
 </table>
 
