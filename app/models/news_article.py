@@ -12,7 +12,7 @@ class NewsArticle(Base):
     title = Column(String(255), nullable=False)
     url = Column(String(225), nullable=False)
     published_at = Column(DateTime(timezone=True), nullable=False)
-    summary_text = Column(String, nullable=False)
+    summary_text = Column(String(500), nullable=False)
     male_audio_url = Column(String(500), nullable=False)
     female_audio_url = Column(String(500), nullable=False)
     original_image_url = Column(String(200))
