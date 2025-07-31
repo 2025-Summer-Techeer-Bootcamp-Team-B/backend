@@ -38,7 +38,7 @@ async def recommend_articles_for_user_async(db, user_id, top_k=30):
                     NewsArticle.is_deleted == False
                 ).first()
                 
-                if article and hit["_score"] >= 0.75:  # 스코어 0.75 이상만 필터링
+                if article and hit["_score"] >= 0.6:  # 스코어 임계값을 0.6으로 조정
                     results.append({
                         "id": str(article.id),
                         "title": article.title,
@@ -52,3 +52,5 @@ async def recommend_articles_for_user_async(db, user_id, top_k=30):
     results.sort(key=lambda x: x["score"], reverse=True)
     print(f"🎯 추천 기사 결과: {len(results)}개")
     return results[:top_k]
+
+ 

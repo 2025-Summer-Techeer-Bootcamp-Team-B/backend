@@ -83,6 +83,8 @@ async def recommend_articles(request: Request, db: Session = Depends(get_db)):
     
     return [ArticleRecommendResponse(**r) for r in results]
 
+
+
 #뉴스 상세 조회 하기
 @router.get("/{article_id}", response_model=ArticleDetailResponse)
 def get_article_detail(request: Request,article_id: UUID, db: Session = Depends(get_db)):
