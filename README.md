@@ -125,15 +125,15 @@
         <th colspan="2">FastAPI&cAdvisor</th>
     </tr>
     <tr>
-        <td><img src="https://github.com/user-attachments/assets/e3b71dc9-e07d-4ef1-8402-7148b8fae083" alt="Django"></td>
-        <td><img src="https://github.com/user-attachments/assets/eeac7bab-b74f-40eb-b505-d684c842333a" alt="Django2"></td>
+        <td><img src="https://github.com/user-attachments/assets/19334172-8ce4-4a48-a84a-b82e6b3fd5cc" alt="FastAPI"></td>
+        <td><img src="https://github.com/user-attachments/assets/3f75b7c4-c2a3-47df-beb5-df484459b9b2" alt="cAdvisor"></td>
     </tr>
     <tr>
     <tr>
         <th colspan="2">celery tasks</th>
     </tr>
     <tr>
-        <td colspan="2"><img src="https://github.com/user-attachments/assets/920c2e85-7caa-4749-8dc8-b7d557e82e01" alt="cAdvisor2"></td>
+        <td colspan="2"><img src="https://github.com/user-attachments/assets/b7a49842-4627-46ad-adba-cb8f32610de6" alt="celery"></td>
     </tr>
 </table>
 
