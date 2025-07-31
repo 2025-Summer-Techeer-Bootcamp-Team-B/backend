@@ -67,10 +67,10 @@ def read_articles(db: Session = Depends(get_db)):
 # 서버 시작 시 전체 기사 크롤링 한번 실행
 # 이후 매 15분마다 자동 크롤링
 
-#@app.on_event("startup")
-#def startup_event():
-#    start_scheduler(app)
-    # 서버 시작 시 즉시 한 번 실행은 제거됨
+@app.on_event("startup")
+def startup_event():
+   start_scheduler(app)
+  #  서버 시작 시 즉시 한 번 실행은 제거됨
     # import asyncio
     # loop = asyncio.get_event_loop()
     # loop.create_task(scrape_all_articles_async(max_concurrent=10, save_to_db=True))
