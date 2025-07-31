@@ -19,6 +19,7 @@ def get_article_recent(db: Session, limit: int = 20) -> List[NewsArticle]:
         NewsArticle.is_deleted == False,
         NewsArticle.male_audio_url.isnot(None), NewsArticle.male_audio_url != '',
         NewsArticle.female_audio_url.isnot(None), NewsArticle.female_audio_url != '',
+        NewsArticle.thumbnail_image_url.isnot(None), NewsArticle.thumbnail_image_url != '',
     ).order_by(NewsArticle.published_at.desc()).limit(limit).all()
 
 # 뉴스 상세 조회
@@ -28,6 +29,7 @@ def get_article_by_id(db: Session, article_id: UUID):
         NewsArticle.is_deleted == False,
         NewsArticle.male_audio_url.isnot(None), NewsArticle.male_audio_url != '',
         NewsArticle.female_audio_url.isnot(None), NewsArticle.female_audio_url != '',
+        NewsArticle.thumbnail_image_url.isnot(None), NewsArticle.thumbnail_image_url != '',
     ).first()
 
 # 사용자 관심 카테고리 기사 조회
@@ -48,6 +50,7 @@ def get_articles_by_category_and_user_press(db: Session, user_id: str, category_
             NewsArticle.is_deleted == False,
             NewsArticle.male_audio_url.isnot(None), NewsArticle.male_audio_url != '',
             NewsArticle.female_audio_url.isnot(None), NewsArticle.female_audio_url != '',
+            NewsArticle.thumbnail_image_url.isnot(None), NewsArticle.thumbnail_image_url != '',
             NewsArticle.published_at >= start,
             NewsArticle.published_at < end
         )
