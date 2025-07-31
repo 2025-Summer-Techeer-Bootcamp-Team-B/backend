@@ -85,4 +85,7 @@ async def search_similar_articles_by_embedding_async(embedding, top_k=10):
             headers={"Content-Type": "application/json"}
         ) as resp:
             result = await resp.json()
+            print(f"🔍 OpenSearch 검색 결과: {len(result.get('hits', {}).get('hits', []))}개")
+            if 'error' in result:
+                print(f"❌ OpenSearch 에러: {result['error']}")
             return result['hits']['hits'] 
