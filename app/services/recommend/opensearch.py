@@ -34,8 +34,8 @@ async def bulk_index_articles(articles: List[NewsArticle]):
     article_ids = [str(article.id) for article in articles]
     titles = [article.title for article in articles]
     contents = [article.summary_text for article in articles]
-
-    embeddings = await get_embeddings_batch_async(texts)  # ✅ 한 번에 전체 처리
+#
+    embeddings = await get_embeddings_batch_async(texts)  # ✅ 한 번에 전체 처리!!
 
     bulk_lines = []
     for article_id, title, content, embedding in zip(article_ids, titles, contents, embeddings):
