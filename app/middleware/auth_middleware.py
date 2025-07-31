@@ -19,6 +19,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/api/v1/auth/register",
             "/api/v1/auth/exists",
             "/api/v1/auth/login",
+
         ]
         
         # refresh 토큰만 접근 가능한 경로들

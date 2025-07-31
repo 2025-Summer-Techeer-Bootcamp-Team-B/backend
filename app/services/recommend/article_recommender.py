@@ -16,6 +16,12 @@ async def index_user_preferred_articles(db, user_id: str):
 async def recommend_articles_for_user_async(db, user_id, top_k=30):
     """사용자별 추천 기사를 생성합니다."""
     keywords = get_user_keywords(db, user_id)
+    print(f"🔍 사용자 {user_id}의 키워드: {keywords}")
+    
+    if not keywords:
+        print("❌ 사용자 키워드가 없습니다.")
+        return []
+    
     results = []
     seen_ids = set()
     semaphore = asyncio.Semaphore(10)
@@ -32,7 +38,7 @@ async def recommend_articles_for_user_async(db, user_id, top_k=30):
                     NewsArticle.is_deleted == False
                 ).first()
                 
-                if article and hit["_score"] >= 0.75:  # 스코어 0.75 이상만 필터링
+                if article and hit["_score"] >= 0.75:  # 스코어 임계값을 0.6으로 조정
                     results.append({
                         "id": str(article.id),
                         "title": article.title,
@@ -44,4 +50,7 @@ async def recommend_articles_for_user_async(db, user_id, top_k=30):
                         "score": hit["_score"]
                     })
     results.sort(key=lambda x: x["score"], reverse=True)
-    return results[:top_k] 
+    print(f"🎯 추천 기사 결과: {len(results)}개")
+    return results[:top_k]
+
+ 

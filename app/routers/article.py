@@ -44,7 +44,10 @@ def read_recent_articles(limit: int = 20, db: Session = Depends(get_db)):
 #사용자 관심 카테고리 뉴스 가져오기
 @router.get("/preferred-category", response_model=List[ArticleRecentResponse])
 def get_articles_by_category_and_user_press_router(request: Request, category_name: str, db: Session = Depends(get_db)):
-    user_id = request.state.user_id
+    user_id = getattr(request.state, 'user_id', None)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="인증이 필요합니다.")
+    
     articles = get_articles_by_category_and_user_press(db, user_id, category_name)
     if not articles:
         raise HTTPException(status_code=404, detail="해당 조건에 맞는 기사가 없습니다.")
@@ -79,6 +82,8 @@ async def recommend_articles(request: Request, db: Session = Depends(get_db)):
     logging.info(f"🎯 사용자 {user_id}에게 추천 기사 {len(results)}개 반환")
     
     return [ArticleRecommendResponse(**r) for r in results]
+
+
 
 #뉴스 상세 조회 하기
 @router.get("/{article_id}", response_model=ArticleDetailResponse)
