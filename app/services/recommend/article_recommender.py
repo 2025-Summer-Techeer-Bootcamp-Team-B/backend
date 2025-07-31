@@ -38,7 +38,7 @@ async def recommend_articles_for_user_async(db, user_id, top_k=30):
                     NewsArticle.is_deleted == False
                 ).first()
                 
-                if article and hit["_score"] >= 0.6:  # 스코어 임계값을 0.6으로 조정
+                if article and hit["_score"] >= 0.75:  # 스코어 임계값을 0.6으로 조정
                     results.append({
                         "id": str(article.id),
                         "title": article.title,
