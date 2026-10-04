@@ -11,7 +11,6 @@ from app.models.user_preferred_press import UserPreferredPress
 from app.models.user_category import UserCategory
 from app.utils.datetime_utils import get_today_range_kst
 
-start, end = get_today_range_kst()
 # 실시간 뉴스 조회 20개까지
 def get_article_recent(db: Session, limit: int = 20) -> List[NewsArticle]:
     # 모든 주요 필드가 None/빈 문자열이 아닌 기사만 반환
@@ -34,6 +33,8 @@ def get_article_by_id(db: Session, article_id: UUID):
 
 # 사용자 관심 카테고리 기사 조회
 def get_articles_by_category_and_user_press(db: Session, user_id: str, category_name: str):
+    # 조회 시점 기준으로 계산해야 서버 기동 이후 발행된 기사도 포함됨
+    start, end = get_today_range_kst()
     preferred_press_ids = (
         db.query(UserPreferredPress.press_id)
         .filter(
@@ -121,6 +122,8 @@ def get_user_preferred_articles(db: Session, user_id: str) -> List[NewsArticle]:
         UserCategory.is_deleted == False
     ).all()
     category_ids = [cid[0] for cid in category_ids]
+    # 3. 조회 시점 기준 시간 범위
+    start, end = get_today_range_kst()
     # 4. 해당 언론사+카테고리+오늘 기사만 반환
     articles = db.query(NewsArticle).filter(
         NewsArticle.press_id.in_(press_ids),
